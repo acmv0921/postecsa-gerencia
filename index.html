@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POSTECSA — Biblioteca de Materiales</title>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family: Arial, sans-serif; background:#0f2540; min-height:100vh; }
+.hdr { background:#1a3c5e; border-bottom:3px solid #e87c1e; padding:14px 16px; }
+.hdr h1 { color:#fff; font-size:16px; font-weight:700; }
+.hdr p  { color:#cdd5e0; font-size:11px; margin-top:2px; }
+.content { padding:16px; }
+.kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.kpi { background:#fff; border-radius:10px; padding:14px; text-align:center; }
+.kpi-val { font-size:28px; font-weight:800; color:#1a3c5e; }
+.kpi-lbl { font-size:10px; color:#5a6478; margin-top:4px; text-transform:uppercase; }
+.search { width:100%; padding:10px 12px; border:1.5px solid #cdd5e0; border-radius:8px; font-size:13px; margin-bottom:12px; }
+.mat { background:#fff; border-radius:8px; padding:10px 14px; margin-bottom:8px; border-left:4px solid #e87c1e; display:flex; justify-content:space-between; align-items:center; }
+.mat-nom { font-size:13px; font-weight:700; color:#1a3c5e; }
+.mat-sub { font-size:11px; color:#5a6478; margin-top:2px; }
+.mat-precio { font-size:14px; font-weight:800; color:#1a3c5e; white-space:nowrap; margin-left:10px; }
+.badge { background:#e87c1e; color:#fff; font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px; display:inline-block; margin-bottom:10px; }
+</style>
+</head>
+<body>
+<div class="hdr">
+  <h1>📦 Biblioteca de Materiales</h1>
+  <p>POSTEC DE OCCIDENTE S.A.S. · Gestión de Mantenimiento</p>
+</div>
+<div class="content">
+  <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-val" id="kpiTotal">0</div><div class="kpi-lbl">Materiales</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:#e87c1e" id="kpiFecha">—</div><div class="kpi-lbl">Actualización</div></div>
+  </div>
+  <input class="search" id="buscar" placeholder="🔍 Buscar material..." oninput="filtrar()">
+  <div id="lista"></div>
+</div>
+
+<script>
+var MATERIALES = [
+  {desc:"Rodamiento 6205 genérico",um:"Und",precio:12500},
+  {desc:"Rodamiento 6205 SKF",um:"Und",precio:45000},
+  {desc:"Rodamiento 6305",um:"Und",precio:18000},
+  {desc:"Rodamiento 6306",um:"Und",precio:25000},
+  {desc:"Rodamiento 6208",um:"Und",precio:35000},
+  {desc:"Chumacera UCP 205",um:"Und",precio:65000},
+  {desc:"Grasa SKF LGEP2 1kg",um:"kg",precio:85000},
+  {desc:"Grasa multipropósito 1kg",um:"kg",precio:28000},
+  {desc:"Banda transportadora caucho x metro",um:"m",precio:95000},
+  {desc:"Lona de banda",um:"Und",precio:380000},
+  {desc:"Correa en V A-30",um:"Und",precio:22000},
+  {desc:"Correa en V B-50",um:"Und",precio:38000},
+  {desc:"Caucho lámina 5mm x metro",um:"m",precio:45000},
+  {desc:"Polea fundición hierro 4 pulgadas",um:"Und",precio:185000},
+  {desc:"Piñón acero 41-40",um:"Und",precio:120000},
+  {desc:"Buje acero 40mm",um:"Und",precio:95000},
+  {desc:"Pasador acero 41-40",um:"Und",precio:160000},
+  {desc:"Mecanizado de eje servicio",um:"Und",precio:500000},
+  {desc:"Fabricación rueda guía",um:"Und",precio:190000},
+  {desc:"Aceite hidráulico ISO 46 galón",um:"Gal",precio:97000},
+  {desc:"Manguera hidráulica 1/2 x metro",um:"m",precio:28000},
+  {desc:"Manguera hidráulica 3/4 x metro",um:"m",precio:42000},
+  {desc:"Niple galvanizado 1/2 pulgada",um:"Und",precio:4500},
+  {desc:"Codo hidráulico 1/2 pulgada",um:"Und",precio:8000},
+  {desc:"Reparación cilindro hidráulico",um:"Und",precio:1200000},
+  {desc:"Tornillo hexagonal M10x30",um:"Und",precio:800},
+  {desc:"Tornillo hexagonal M12x40",um:"Und",precio:1200},
+  {desc:"Tuerca M10",um:"Und",precio:400},
+  {desc:"Tuerca M12",um:"Und",precio:600},
+  {desc:"Arandela plana M10",um:"Und",precio:250},
+  {desc:"Perno M16x80",um:"Und",precio:2800},
+  {desc:"Grasera M8 recta",um:"Und",precio:1500},
+  {desc:"Anillo retén 40mm",um:"Und",precio:8500},
+  {desc:"Electrodo 6013 x kg",um:"kg",precio:9500},
+  {desc:"Electrodo 7018 x kg",um:"kg",precio:14000},
+  {desc:"Lámina HR A36 3mm x kg",um:"kg",precio:4500},
+  {desc:"Lámina HR A36 6mm x kg",um:"kg",precio:4800},
+  {desc:"Lámina inox 304 2mm x kg",um:"kg",precio:18000},
+  {desc:"Broca HSS 3/8 pulgada",um:"Und",precio:12000},
+  {desc:"Disco corte 4.5 pulgadas",um:"Und",precio:4500},
+  {desc:"Disco pulir 4.5 pulgadas",um:"Und",precio:5500},
+  {desc:"Contactor Schneider 18A 220V",um:"Und",precio:195000},
+  {desc:"Contactor Schneider 32A 220V",um:"Und",precio:310000},
+  {desc:"Relé térmico 9-13A",um:"Und",precio:185000},
+  {desc:"Fusible industrial 25A",um:"Und",precio:8500},
+  {desc:"Cable THHN No12 x metro",um:"m",precio:3200},
+  {desc:"Terminal de presión 10mm",um:"Und",precio:1800},
+  {desc:"Interruptor termomagnético 20A",um:"Und",precio:95000},
+  {desc:"Bornera riel DIN",um:"Und",precio:4500},
+  {desc:"Aceite motor 15W40 galón",um:"Gal",precio:85000},
+  {desc:"Filtro aceite Komatsu",um:"Und",precio:95000},
+  {desc:"Filtro aire primario",um:"Und",precio:120000},
+  {desc:"Correa alternador",um:"Und",precio:53000}
+];
+
+function fmt(n){ return '$'+Number(n).toLocaleString('es-CO'); }
+
+function render(lista) {
+  var L = document.getElementById('lista');
+  if(!lista.length) { L.innerHTML='<p style="color:#cdd5e0;text-align:center;padding:20px">Sin resultados</p>'; return; }
+  L.innerHTML = lista.map(function(m) {
+    return '<div class="mat">'+
+      '<div><div class="mat-nom">'+m.desc+'</div><div class="mat-sub">'+m.um+'</div></div>'+
+      '<div class="mat-precio">'+fmt(m.precio)+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function filtrar() {
+  var q = document.getElementById('buscar').value.toLowerCase();
+  render(q ? MATERIALES.filter(function(m){ return m.desc.toLowerCase().indexOf(q)!==-1; }) : MATERIALES);
+}
+
+// Inicializar
+document.getElementById('kpiTotal').textContent = MATERIALES.length;
+document.getElementById('kpiFecha').textContent = '2026-06-17';
+render(MATERIALES);
+</script>
+</body>
+</html>
