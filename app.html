@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>POSTECSA Gerencia</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0f2540;color:#fff;padding:16px}
+.hdr{border-bottom:3px solid #e87c1e;padding-bottom:12px;margin-bottom:16px}
+h1{font-size:16px;color:#fff}
+p{font-size:11px;color:#cdd5e0;margin-top:3px}
+.tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:8px 14px;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.6);border-radius:6px;cursor:pointer;font-size:12px;font-weight:700}
+.tab.on{background:#e87c1e;color:#fff}
+.panel{display:none}
+.panel.on{display:block}
+input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size:13px;margin-bottom:10px}
+.btn{width:100%;padding:11px;background:#1a3c5e;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px}
+.btn.red{background:#c0392b}
+.mat{background:#fff;color:#333;border-radius:8px;padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;border-left:4px solid #e87c1e}
+.mn{font-size:13px;font-weight:700;color:#1a3c5e}
+.ms{font-size:10px;color:#888;margin-top:2px}
+.mp{font-size:13px;font-weight:800;color:#1a3c5e;white-space:nowrap;margin-left:8px}
+.xb{background:none;border:1px solid #ddd;border-radius:4px;padding:3px 8px;color:#c0392b;cursor:pointer;font-size:11px;margin-left:6px;flex-shrink:0}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.kpi{background:#fff;border-radius:8px;padding:10px;text-align:center}
+.kv{font-size:20px;font-weight:800;color:#1a3c5e}
+.kv.o{color:#e87c1e}
+.kl{font-size:9px;color:#888;text-transform:uppercase;margin-top:2px}
+.ri{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border-bottom:1px solid #e2e8f0;color:#333}
+.rn{width:24px;height:24px;border-radius:50%;background:#1a3c5e;color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;flex-shrink:0}
+.rn.t1{background:#e87c1e}.rn.t2{background:#888}.rn.t3{background:#92400e}
+.rbw{flex:1}.rno{font-size:12px;font-weight:700;color:#1a3c5e}
+.rb{height:4px;background:#e2e8f0;border-radius:2px;margin-top:3px}
+.rf{height:100%;background:#e87c1e;border-radius:2px}
+.pr{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border-bottom:1px solid #e2e8f0}
+.pn{flex:1;font-size:12px;color:#1a3c5e;font-weight:600}
+.pu{font-size:10px;color:#888;width:30px}
+.pi{width:100px;padding:5px;border:1px solid #ddd;border-radius:4px;font-size:12px;text-align:right;margin:0}
+.pb{padding:5px 10px;background:#e87c1e;color:#fff;border:none;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer}
+.tbl{width:100%;border-collapse:collapse;font-size:11px;background:#fff;border-radius:8px;overflow:hidden}
+.tbl th{background:#1a3c5e;color:#fff;padding:7px 8px;text-align:left;font-size:10px;white-space:nowrap}
+.tbl td{padding:7px 8px;border-bottom:1px solid #e2e8f0;color:#333}
+.tbl tr:nth-child(even) td{background:#f5f5f5}
+.wt{overflow-x:auto}
+.empty{text-align:center;padding:20px;color:#888}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1a3c5e;color:#fff;padding:8px 16px;border-radius:16px;font-size:12px;font-weight:700;opacity:0;transition:.3s;z-index:999;pointer-events:none}
+.toast.on{opacity:1}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<div class="hdr">
+  <h1>&#128230; Biblioteca de Materiales</h1>
+  <p>POSTEC DE OCCIDENTE S.A.S. - Gestion de Mantenimiento - Gerencia</p>
+</div>
+<div class="tabs">
+  <button class="tab on" onclick="T('B')">Biblioteca</button>
+  <button class="tab" onclick="T('H')">Historial</button>
+  <button class="tab" onclick="T('R')">Ranking</button>
+  <button class="tab" onclick="T('P')">Precios</button>
+  <button class="tab" onclick="T('I')">Informes</button>
+</div>
+
+<div class="panel on" id="pB">
+  <div class="kpis">
+    <div class="kpi"><div class="kv" id="k1">0</div><div class="kl">Materiales</div></div>
+    <div class="kpi"><div class="kv o" id="k2">0</div><div class="kl">OT reales</div></div>
+    <div class="kpi"><div class="kv" id="k3">0</div><div class="kl">Equipos</div></div>
+    <div class="kpi"><div class="kv o" id="k4">--</div><div class="kl">Ultima OT</div></div>
+  </div>
+  <button class="btn" onclick="sync()">&#128260; Actualizar desde Google Sheet</button>
+  <button class="btn red" onclick="limpiar()">&#128465; Limpiar historial de OT</button>
+  <input id="bM" placeholder="Buscar material...">
+  <select id="fC"><option value="">Todos los equipos</option></select>
+  <div id="lB"></div>
+</div>
+
+<div class="panel" id="pH">
+  <input id="bH" placeholder="Buscar OT, equipo, material...">
+  <select id="fE"><option value="">Todos los equipos</option></select>
+  <div class="wt"><table class="tbl">
+    <thead><tr><th>Fecha</th><th>N OT</th><th>Equipo</th><th>Mecanico</th><th>Material</th><th>Cant</th><th>UM</th><th>Precio</th></tr></thead>
+    <tbody id="tH"><tr><td colspan="8" class="empty">Sin OT registradas</td></tr></tbody>
+  </table></div>
+</div>
+
+<div class="panel" id="pR">
+  <p style="color:#cdd5e0;margin-bottom:12px;font-size:12px">Materiales mas usados</p>
+  <div id="rM"></div>
+  <p style="color:#cdd5e0;margin:12px 0;font-size:12px">Equipos con mas intervenciones</p>
+  <div id="rE"></div>
+</div>
+
+<div class="panel" id="pP">
+  <p style="color:#cdd5e0;margin-bottom:10px;font-size:12px">Precios guardados en este dispositivo</p>
+  <div id="pL"></div>
+</div>
+
+<div class="panel" id="pI">
+  <p style="color:#cdd5e0;margin-bottom:12px;font-size:12px">Selecciona el tipo de informe y genera el PDF</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+    <div id="ic1" onclick="sI(1)" style="background:#fff;border-radius:8px;padding:14px;text-align:center;cursor:pointer;border:2px solid #e87c1e">
+      <div style="font-size:24px;margin-bottom:4px">&#128230;</div>
+      <div style="font-size:12px;font-weight:700;color:#1a3c5e">Materiales</div>
+      <div style="font-size:10px;color:#888">Lista con precios</div>
+    </div>
+    <div id="ic2" onclick="sI(2)" style="background:#fff;border-radius:8px;padding:14px;text-align:center;cursor:pointer;border:2px solid transparent">
+      <div style="font-size:24px;margin-bottom:4px">&#9881;</div>
+      <div style="font-size:12px;font-weight:700;color:#1a3c5e">Por Equipo</div>
+      <div style="font-size:10px;color:#888">Por maquina</div>
+    </div>
+    <div id="ic3" onclick="sI(3)" style="background:#fff;border-radius:8px;padding:14px;text-align:center;cursor:pointer;border:2px solid transparent">
+      <div style="font-size:24px;margin-bottom:4px">&#128176;</div>
+      <div style="font-size:12px;font-weight:700;color:#1a3c5e">Costos</div>
+      <div style="font-size:10px;color:#888">Total por OT</div>
+    </div>
+    <div id="ic4" onclick="sI(4)" style="background:#fff;border-radius:8px;padding:14px;text-align:center;cursor:pointer;border:2px solid transparent">
+      <div style="font-size:24px;margin-bottom:4px">&#128203;</div>
+      <div style="font-size:12px;font-weight:700;color:#1a3c5e">Completo</div>
+      <div style="font-size:10px;color:#888">Todos en uno</div>
+    </div>
+  </div>
+  <button class="btn" onclick="gPDF()">&#128196; Generar y Descargar PDF</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var GU='https://script.google.com/macros/s/AKfycbyFiCuXWW2DsrSmRotQ93xRZYjMBAWQnoa-STlqNINaf7rSWhpkwgUpYH1ngPcQetTW/exec';
+var BASE=[
+{n:"Rodamiento 6205 generico",u:"Und",p:12500},{n:"Rodamiento 6205 SKF",u:"Und",p:45000},
+{n:"Rodamiento 6305",u:"Und",p:18000},{n:"Rodamiento 6306",u:"Und",p:25000},
+{n:"Rodamiento 6208",u:"Und",p:35000},{n:"Chumacera UCP 205",u:"Und",p:65000},
+{n:"Grasa SKF LGEP2 1kg",u:"kg",p:85000},{n:"Grasa multiproposito 1kg",u:"kg",p:28000},
+{n:"Banda transportadora caucho x metro",u:"m",p:95000},{n:"Lona de banda",u:"Und",p:380000},
+{n:"Correa en V A-30",u:"Und",p:22000},{n:"Correa en V B-50",u:"Und",p:38000},
+{n:"Caucho lamina 5mm x metro",u:"m",p:45000},{n:"Polea fundicion hierro 4 pulgadas",u:"Und",p:185000},
+{n:"Pinon acero 41-40",u:"Und",p:120000},{n:"Buje acero 40mm",u:"Und",p:95000},
+{n:"Pasador acero 41-40",u:"Und",p:160000},{n:"Mecanizado de eje servicio",u:"Und",p:500000},
+{n:"Fabricacion rueda guia",u:"Und",p:190000},{n:"Aceite hidraulico ISO 46 galon",u:"Gal",p:97000},
+{n:"Manguera hidraulica 1-2 x metro",u:"m",p:28000},{n:"Manguera hidraulica 3-4 x metro",u:"m",p:42000},
+{n:"Niple galvanizado 1-2 pulgada",u:"Und",p:4500},{n:"Codo hidraulico 1-2 pulgada",u:"Und",p:8000},
+{n:"Reparacion cilindro hidraulico",u:"Und",p:1200000},{n:"Tornillo hexagonal M10x30",u:"Und",p:800},
+{n:"Tornillo hexagonal M12x40",u:"Und",p:1200},{n:"Tuerca M10",u:"Und",p:400},
+{n:"Tuerca M12",u:"Und",p:600},{n:"Arandela plana M10",u:"Und",p:250},
+{n:"Perno M16x80",u:"Und",p:2800},{n:"Grasera M8 recta",u:"Und",p:1500},
+{n:"Anillo reten 40mm",u:"Und",p:8500},{n:"Electrodo 6013 x kg",u:"kg",p:9500},
+{n:"Electrodo 7018 x kg",u:"kg",p:14000},{n:"Lamina HR A36 3mm x kg",u:"kg",p:4500},
+{n:"Lamina HR A36 6mm x kg",u:"kg",p:4800},{n:"Lamina inox 304 2mm x kg",u:"kg",p:18000},
+{n:"Broca HSS 3-8 pulgada",u:"Und",p:12000},{n:"Disco corte 4.5 pulgadas",u:"Und",p:4500},
+{n:"Disco pulir 4.5 pulgadas",u:"Und",p:5500},{n:"Contactor Schneider 18A 220V",u:"Und",p:195000},
+{n:"Contactor Schneider 32A 220V",u:"Und",p:310000},{n:"Rele termico 9-13A",u:"Und",p:185000},
+{n:"Fusible industrial 25A",u:"Und",p:8500},{n:"Cable THHN No12 x metro",u:"m",p:3200},
+{n:"Terminal de presion 10mm",u:"Und",p:1800},{n:"Interruptor termomagnetico 20A",u:"Und",p:95000},
+{n:"Bornera riel DIN",u:"Und",p:4500},{n:"Aceite motor 15W40 galon",u:"Gal",p:85000},
+{n:"Filtro aceite Komatsu",u:"Und",p:95000},{n:"Filtro aire primario",u:"Und",p:120000},
+{n:"Correa alternador",u:"Und",p:53000}
+];
+
+var D=BASE.map(function(m){return{desc:m.n,um:m.u,precio:m.p,otNum:"BIBLIOTECA-INICIAL",equipo:"General",fecha:"2026-06-17",cant:1,mecanico:"Referencia"};});
+var PR={};
+try{PR=JSON.parse(localStorage.getItem('pg_p')||'{}');}catch(e){}
+
+document.getElementById('bM').oninput=rB;
+document.getElementById('fC').onchange=rB;
+document.getElementById('bH').oninput=rH;
+document.getElementById('fE').onchange=rH;
+
+proc();
+
+fetch(GU).then(function(r){return r.json();}).then(function(res){
+  if(res.ok&&res.datos){
+    var real=res.datos.filter(function(d){return d.otNum!='BIBLIOTECA-INICIAL';});
+    if(real.length){D=D.filter(function(d){return d.otNum=='BIBLIOTECA-INICIAL';}).concat(real);proc();toast(real.length+' OT reales');}
+  }
+}).catch(function(){});
+
+function sync(){
+  toast('Sincronizando...');
+  fetch(GU).then(function(r){return r.json();}).then(function(res){
+    if(res.ok&&res.datos){
+      var real=res.datos.filter(function(d){return d.otNum!='BIBLIOTECA-INICIAL';});
+      D=D.filter(function(d){return d.otNum=='BIBLIOTECA-INICIAL';}).concat(real);
+      proc();toast('Listo: '+D.length+' registros');
+    }
+  }).catch(function(){toast('Sin conexion');});
+}
+
+function limpiar(){
+  if(!confirm('Limpiar historial de OT reales?'))return;
+  D=D.filter(function(d){return d.otNum=='BIBLIOTECA-INICIAL';});
+  fetch(GU,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({accion:'limpiar_todo'})}).catch(function(){});
+  proc();toast('Limpiado');
+}
+
+function proc(){
+  var eq=[...new Set(D.map(function(d){return d.equipo;}).filter(Boolean))].sort();
+  ['fC','fE'].forEach(function(id){
+    var s=document.getElementById(id),v=s.value;
+    s.innerHTML='<option value="">Todos los equipos</option>';
+    eq.forEach(function(e){var o=document.createElement('option');o.value=e;o.textContent=e;s.appendChild(o);});
+    s.value=v;
+  });
+  document.getElementById('k1').textContent=new Set(D.map(function(d){return d.desc;})).size;
+  document.getElementById('k2').textContent=new Set(D.filter(function(d){return d.otNum!='BIBLIOTECA-INICIAL';}).map(function(d){return d.otNum;})).size;
+  document.getElementById('k3').textContent=new Set(D.map(function(d){return d.equipo;})).size;
+  var fechas=D.filter(function(d){return d.otNum!='BIBLIOTECA-INICIAL';}).map(function(d){return String(d.fecha);}).sort();
+  document.getElementById('k4').textContent=fechas.length?fechas[fechas.length-1].slice(0,10):'--';
+  rB();rH();rRk();rPr();
+}
+
+function fmt(n){return '$'+Number(n||0).toLocaleString('es-CO');}
+
+function rB(){
+  var q=(document.getElementById('bM').value||'').toLowerCase();
+  var eq=document.getElementById('fC').value;
+  var mp={};
+  D.forEach(function(d){
+    if(!d.desc)return;
+    if(eq&&d.equipo!==eq)return;
+    if(q&&d.desc.toLowerCase().indexOf(q)===-1)return;
+    var k=d.desc.toLowerCase().trim();
+    if(!mp[k])mp[k]={desc:d.desc,um:d.um||'Und',usos:0,eqs:new Set(),p:PR[k]||Number(d.precio)||0};
+    mp[k].usos++;
+    if(d.equipo)mp[k].eqs.add(d.equipo);
+    if(!PR[k]&&Number(d.precio)>0)mp[k].p=Number(d.precio);
+  });
+  var it=Object.values(mp).sort(function(a,b){return b.usos-a.usos;});
+  var L=document.getElementById('lB');
+  if(!it.length){L.innerHTML='<div class="empty">Sin resultados</div>';return;}
+  L.innerHTML=it.map(function(m){
+    var k=encodeURIComponent(m.desc);
+    return '<div class="mat"><div><div class="mn">'+m.desc+'</div>'+
+    '<div class="ms">'+m.usos+' uso'+(m.usos>1?'s':'')+' | '+[...m.eqs].join(', ')+'</div></div>'+
+    '<div style="display:flex;align-items:center">'+
+    '<div class="mp">'+(m.p>0?fmt(m.p):'--')+'<br><span style="font-size:9px;color:#888;font-weight:400">'+m.um+'</span></div>'+
+    '<button class="xb" onclick="bD(\''+k+'\')">X</button></div></div>';
+  }).join('');
+}
+
+function bD(kE){
+  var d=decodeURIComponent(kE);
+  if(!confirm('Eliminar '+d+'?'))return;
+  D=D.filter(function(x){return x.desc.toLowerCase().trim()!==d.toLowerCase().trim();});
+  fetch(GU,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({accion:'borrar_material',desc:d})}).catch(function(){});
+  proc();toast('Eliminado');
+}
+
+function rH(){
+  var q=(document.getElementById('bH').value||'').toLowerCase();
+  var eq=document.getElementById('fE').value;
+  var f=D.filter(function(d){
+    if(d.otNum=='BIBLIOTECA-INICIAL')return false;
+    if(eq&&d.equipo!==eq)return false;
+    if(q){var txt=[d.otNum,d.equipo,d.mecanico,d.desc].join(' ').toLowerCase();if(txt.indexOf(q)===-1)return false;}
+    return true;
+  });
+  var tb=document.getElementById('tH');
+  if(!f.length){tb.innerHTML='<tr><td colspan="8" class="empty">Sin OT registradas aun</td></tr>';return;}
+  tb.innerHTML=f.slice(0,200).map(function(d){
+    return '<tr><td>'+String(d.fecha).slice(0,10)+'</td><td><b>'+d.otNum+'</b></td>'+
+    '<td>'+d.equipo+'</td><td>'+d.mecanico+'</td><td>'+d.desc+'</td>'+
+    '<td style="text-align:center">'+d.cant+'</td><td>'+d.um+'</td>'+
+    '<td style="text-align:right;font-weight:700;color:#1a3c5e">'+(Number(d.precio)>0?fmt(d.precio):'--')+'</td></tr>';
+  }).join('');
+}
+
+function rRk(){
+  var cM={},cE={},oE={};
+  D.forEach(function(d){
+    if(!d.desc)return;
+    cM[d.desc]=(cM[d.desc]||0)+1;
+    if(d.equipo){cE[d.equipo]=(cE[d.equipo]||0)+1;if(!oE[d.equipo])oE[d.equipo]=new Set();if(d.otNum)oE[d.equipo].add(d.otNum);}
+  });
+  var tM=Object.entries(cM).sort(function(a,b){return b[1]-a[1];}).slice(0,10);
+  var mxM=tM.length?tM[0][1]:1;
+  document.getElementById('rM').innerHTML=tM.map(function(e,i){
+    var p=Math.round(e[1]/mxM*100),c=i===0?'t1':i===1?'t2':i===2?'t3':'';
+    return '<div class="ri"><div class="rn '+c+'">'+(i+1)+'</div>'+
+    '<div class="rbw"><div class="rno">'+e[0]+'</div><div class="rb"><div class="rf" style="width:'+p+'%"></div></div></div>'+
+    '<span style="font-size:11px;color:#888;white-space:nowrap">'+e[1]+' uso'+(e[1]>1?'s':'')+'</span></div>';
+  }).join('')||'<div class="empty">Sin datos</div>';
+  var tE=Object.entries(cE).sort(function(a,b){return b[1]-a[1];}).slice(0,8);
+  var mxE=tE.length?tE[0][1]:1;
+  document.getElementById('rE').innerHTML=tE.map(function(e,i){
+    var p=Math.round(e[1]/mxE*100),c=i===0?'t1':i===1?'t2':i===2?'t3':'';
+    var n=oE[e[0]]?oE[e[0]].size:0;
+    return '<div class="ri"><div class="rn '+c+'">'+(i+1)+'</div>'+
+    '<div class="rbw"><div class="rno">'+e[0]+'</div><div class="rb"><div class="rf" style="width:'+p+'%"></div></div></div>'+
+    '<span style="font-size:11px;color:#888;white-space:nowrap">'+n+' OT'+(n!==1?'s':'')+'</span></div>';
+  }).join('')||'<div class="empty">Sin datos</div>';
+}
+
+function rPr(){
+  var mp={};
+  D.forEach(function(d){if(!d.desc)return;var k=d.desc.trim().toLowerCase();if(!mp[k])mp[k]={desc:d.desc,um:d.um||'Und',p:PR[k]||Number(d.precio)||0};});
+  document.getElementById('pL').innerHTML=Object.entries(mp).sort(function(a,b){return a[0].localeCompare(b[0]);}).map(function(e){
+    var k=encodeURIComponent(e[0]);
+    return '<div class="pr"><div class="pn">'+e[1].desc+'</div><div class="pu">'+e[1].um+'</div>'+
+    '<input class="pi" type="number" id="pp_'+k+'" value="'+(e[1].p||'')+'" placeholder="0" min="0" step="100">'+
+    '<button class="pb" onclick="gP(\''+k+'\')">OK</button></div>';
+  }).join('');
+}
+
+function gP(kE){
+  var k=decodeURIComponent(kE);
+  var inp=document.getElementById('pp_'+kE);
+  if(!inp)return;
+  var v=parseFloat(inp.value)||0;
+  PR[k]=v;
+  try{localStorage.setItem('pg_p',JSON.stringify(PR));}catch(e){}
+  toast('Precio guardado');rB();
+}
+
+function T(t){
+  var map={B:'pB',H:'pH',R:'pR',P:'pP',I:'pI'};
+  document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on');});
+  document.querySelectorAll('.panel').forEach(function(x){x.classList.remove('on');});
+  event.target.classList.add('on');
+  document.getElementById(map[t]).classList.add('on');
+}
+
+var IS=1;
+function sI(n){
+  IS=n;
+  [1,2,3,4].forEach(function(i){
+    var el=document.getElementById('ic'+i);
+    if(el)el.style.border=i===n?'2px solid #e87c1e':'2px solid transparent';
+  });
+}
+
+function gPDF(){
+  if(typeof window.jspdf==='undefined'){toast('Cargando PDF...');return;}
+  var doc=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  var W=210,MG=15,pg=1;
+  function ft(n){return '$'+Number(n||0).toLocaleString('es-CO');}
+  function H(t){
+    doc.setFillColor(26,60,94);doc.rect(0,0,W,26,'F');
+    doc.setDrawColor(232,124,30);doc.setLineWidth(1.5);doc.line(0,26,W,26);
+    doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(255,255,255);
+    doc.text('POSTEC DE OCCIDENTE S.A.S.',W/2,9,{align:'center'});
+    doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(155,187,217);
+    doc.text('Gestion de Mantenimiento y Confiabilidad',W/2,15,{align:'center'});
+    doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(232,124,30);
+    doc.text(t,W/2,22,{align:'center'});
+    doc.setFontSize(7);doc.setFont('helvetica','italic');doc.setTextColor(150,150,150);
+    doc.text('Generado: '+new Date().toLocaleString('es-CO'),W/2,30,{align:'center'});
+    return 36;
+  }
+  function F(){doc.setFontSize(7);doc.setFont('helvetica','italic');doc.setTextColor(150,150,150);doc.text('POSTEC DE OCCIDENTE S.A.S. - Abdiel Cicar Moreno Velasquez',MG,286);doc.text('Pag.'+pg,W-MG,286,{align:'right'});}
+  function ST(t,y){doc.setFillColor(232,124,30);doc.rect(MG,y,W-MG*2,6,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(255,255,255);doc.text(t,MG+2,y+4.5);return y+9;}
+  function TH(cols,y){doc.setFillColor(26,60,94);doc.rect(MG,y,W-MG*2,6,'F');doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(255,255,255);cols.forEach(function(c){doc.text(c[0],MG+c[1],y+4.5,c[2]?{align:c[2]}:{});});return y+7;}
+  function ROW(cols,y,i){var bg=i%2===0?[240,244,248]:[255,255,255];doc.setFillColor(bg[0],bg[1],bg[2]);doc.rect(MG,y,W-MG*2,6,'F');doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);cols.forEach(function(c){if(c[3])doc.setTextColor(26,60,94);else doc.setTextColor(30,30,30);doc.text(String(c[0]).slice(0,c[4]||50),MG+c[1],y+4.5,c[2]?{align:c[2]}:{});});return y+6;}
+
+  if(IS===1||IS===4){
+    var y=H('INFORME DE MATERIALES');F();
+    var mp={};D.forEach(function(d){if(!d.desc)return;var k=d.desc.toLowerCase().trim();if(!mp[k])mp[k]={desc:d.desc,um:d.um||'Und',usos:0,p:PR[k]||Number(d.precio)||0};mp[k].usos++;if(!PR[k]&&Number(d.precio)>0)mp[k].p=Number(d.precio);});
+    var it=Object.values(mp).sort(function(a,b){return b.usos-a.usos;});
+    y=ST('LISTA DE MATERIALES',y);
+    y=TH([['Material',2],['UM',120,'center'],['Usos',138,'center'],['Precio',W-MG-2-MG,'right']],y);
+    it.forEach(function(m,i){if(y>275){doc.addPage();pg++;y=20;F();}y=ROW([[m.desc.slice(0,42),2],[m.um,120,'center',false],[String(m.usos),138,'center',false],[m.p>0?ft(m.p):'--',W-MG-2-MG,'right',true]],y,i);});
+  }
+  if(IS===2||IS===4){
+    doc.addPage();pg++;var y2=H('INFORME POR EQUIPO');F();
+    var eq={};D.forEach(function(d){if(!d.equipo||!d.desc)return;if(!eq[d.equipo])eq[d.equipo]={};var k=d.desc.trim();if(!eq[d.equipo][k])eq[d.equipo][k]={cant:0,um:d.um||'Und',p:Number(d.precio)||0};eq[d.equipo][k].cant+=Number(d.cant)||1;});
+    Object.entries(eq).sort().forEach(function(e){
+      if(y2>255){doc.addPage();pg++;y2=20;F();}
+      y2=ST(e[0].toUpperCase(),y2);
+      y2=TH([['Material',2],['Cant',125,'center'],['UM',145,'center'],['Precio',W-MG-2-MG,'right']],y2);
+      Object.entries(e[1]).sort().forEach(function(me,i){if(y2>275){doc.addPage();pg++;y2=20;F();}y2=ROW([[me[0].slice(0,42),2],[String(me[1].cant),125,'center'],[me[1].um,145,'center'],[me[1].p>0?ft(me[1].p):'--',W-MG-2-MG,'right',true]],y2,i);});
+      y2+=4;
+    });
+  }
+  if(IS===3||IS===4){
+    doc.addPage();pg++;var y3=H('INFORME DE COSTOS');F();
+    var om={};var tot=0;
+    D.forEach(function(d){if(!d.otNum||d.otNum=='BIBLIOTECA-INICIAL'||!d.desc)return;if(!om[d.otNum])om[d.otNum]={fecha:String(d.fecha).slice(0,10),eq:d.equipo||'--',tot:0};var p=PR[d.desc.toLowerCase().trim()]||Number(d.precio)||0;om[d.otNum].tot+=p*(Number(d.cant)||1);});
+    y3=ST('COSTOS POR OT',y3);
+    y3=TH([['N OT',2],['Fecha',45],['Equipo',75],['Total',W-MG-2-MG,'right']],y3);
+    Object.entries(om).sort().forEach(function(o,i){if(y3>275){doc.addPage();pg++;y3=20;F();}tot+=o[1].tot;y3=ROW([[String(o[0]).slice(0,16),2],[o[1].fecha,45],[(o[1].eq||'--').slice(0,16),75],[o[1].tot>0?ft(o[1].tot):'--',W-MG-2-MG,'right',true]],y3,i);});
+    y3+=4;doc.setFillColor(26,60,94);doc.rect(MG,y3,W-MG*2,8,'F');doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(255,255,255);doc.text('TOTAL GENERAL',MG+3,y3+5.5);doc.setTextColor(232,124,30);doc.text(ft(tot),W-MG-2,y3+5.5,{align:'right'});
+  }
+  var tp=['','Materiales','Por-Equipo','Costos','Completo'][IS];
+  doc.save('POSTECSA_'+tp+'_'+new Date().toISOString().slice(0,10)+'.pdf');
+  toast('PDF generado');
+}
+
+var tt;
+function toast(m){
+  var t=document.getElementById('toast');
+  t.textContent=m;t.classList.add('on');
+  clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on');},3000);
+}
+</script>
+</body>
+</html>
