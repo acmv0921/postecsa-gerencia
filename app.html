@@ -2,6 +2,11 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="theme-color" content="#e87c1e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gerencia">
+<link rel="manifest" href="manifest.json">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>POSTECSA Gerencia</title>
 <style>
@@ -362,6 +367,13 @@ function gPDF(){
   var tp=['','Materiales','Por-Equipo','Costos','Completo'][IS];
   doc.save('POSTECSA_'+tp+'_'+new Date().toISOString().slice(0,10)+'.pdf');
   toast('PDF generado');
+}
+
+// Registrar Service Worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js')
+    .then(()=>console.log('[SW Gerencia] Registrado'))
+    .catch(e=>console.warn('[SW Gerencia]',e));
 }
 
 var tt;
