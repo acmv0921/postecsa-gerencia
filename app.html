@@ -441,7 +441,13 @@ function gPDF(){
     doc.text('Generado: '+new Date().toLocaleString('es-CO'),W/2,30,{align:'center'});
     return 38;
    }
-  function F(){doc.setFontSize(7);doc.setFont('helvetica','italic');doc.setTextColor(150,150,150);doc.text('POSTEC DE OCCIDENTE S.A.S. - Abdiel Cicar Moreno Velasquez',MG,286);doc.text('Pag.'+pg,W-MG,286,{align:'right'});}
+  function F(){
+    doc.setFontSize(7);doc.setFont('helvetica','italic');doc.setTextColor(150,150,150);
+    doc.text('POSTEC DE OCCIDENTE S.A.S.  \u00b7  Gesti\u00f3n de Mantenimiento y Confiabilidad',MG,284);
+    doc.text('P\u00e1g. '+pg,W-MG,284,{align:'right'});
+    doc.setFontSize(6.5);doc.setTextColor(180,180,180);
+    doc.text('Dise\u00f1o & Desarrollo: ABDIEL CICAR MORENO  \u00b7  POSTECSA Gerencia v6.2',W/2,289,{align:'center'});
+  }
   function ST(t,y){doc.setFillColor(232,124,30);doc.rect(MG,y,W-MG*2,6,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(255,255,255);doc.text(t,MG+2,y+4.5);return y+9;}
   function TH(cols,y){doc.setFillColor(26,60,94);doc.rect(MG,y,W-MG*2,6,'F');doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(255,255,255);cols.forEach(function(c){doc.text(c[0],MG+c[1],y+4.5,c[2]?{align:c[2]}:{});});return y+7;}
   function ROW(cols,y,i){var bg=i%2===0?[240,244,248]:[255,255,255];doc.setFillColor(bg[0],bg[1],bg[2]);doc.rect(MG,y,W-MG*2,6,'F');doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(30,30,30);cols.forEach(function(c){if(c[3])doc.setTextColor(26,60,94);else doc.setTextColor(30,30,30);doc.text(String(c[0]).slice(0,c[4]||50),MG+c[1],y+4.5,c[2]?{align:c[2]}:{});});return y+6;}
