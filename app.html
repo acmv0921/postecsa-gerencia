@@ -333,10 +333,13 @@ function rRk(){
 
 function rPr(){
   var mp={};
-  D.forEach(function(d){if(!d.desc)return;var k=d.desc.trim().toLowerCase();if(!mp[k])mp[k]={desc:d.desc,um:d.um||'Und',p:PR[k]||Number(d.precio)||0};});
+  D.forEach(function(d){if(!d.desc)return;var k=d.desc.trim().toLowerCase();var cod3=d.cod||COD_MAP[k]||'';if(!mp[k])mp[k]={desc:d.desc,cod:cod3,um:d.um||'Und',p:PR[k]||Number(d.precio)||0};if(!mp[k].cod&&cod3)mp[k].cod=cod3;});
   document.getElementById('pL').innerHTML=Object.entries(mp).sort(function(a,b){return a[0].localeCompare(b[0]);}).map(function(e){
     var k=encodeURIComponent(e[0]);
-    return '<div class="pr"><div class="pn">'+e[1].desc+'</div><div class="pu">'+e[1].um+'</div>'+
+    var cod2=e[1].cod||COD_MAP[e[0]]||'';
+    return '<div class="pr">'
+    +(cod2?'<span style="background:#E3F2FD;color:#1565C0;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:700;margin-right:6px;flex-shrink:0">'+cod2+'</span>':'')
+    +'<div class="pn">'+e[1].desc+'</div><div class="pu">'+e[1].um+'</div>'+
     '<input class="pi" type="number" id="pp_'+k+'" value="'+(e[1].p||'')+'" placeholder="0" min="0" step="100">'+
     '<button class="pb" onclick="gP(\''+k+'\')">OK</button></div>';
   }).join('');
