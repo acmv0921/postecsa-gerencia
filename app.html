@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gerencia">
 <link rel="manifest" href="manifest.json">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1">
 <title>POSTECSA Gerencia</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -52,6 +52,34 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
 .empty{text-align:center;padding:20px;color:#888}
 .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1a3c5e;color:#fff;padding:8px 16px;border-radius:16px;font-size:12px;font-weight:700;opacity:0;transition:.3s;z-index:999;pointer-events:none}
 .toast.on{opacity:1}
+
+/* ── RESPONSIVE: tablet/celular horizontal ── */
+@media (min-width:600px){
+  body{padding:20px 24px;}
+  .kpis{grid-template-columns:repeat(4,1fr);}
+  .tbl{font-size:12px;}
+  .tbl th,.tbl td{padding:8px 10px;}
+}
+@media (min-width:900px){
+  #app-wrap{display:flex;gap:20px;align-items:flex-start;}
+  .tabs{flex-direction:column;min-width:120px;margin-bottom:0;}
+  .tab{text-align:left;border-radius:8px;}
+  #content-wrap{flex:1;min-width:0;}
+}
+@media (orientation:landscape) and (max-height:520px){
+  /* Celular en landscape: header compacto, tabs horizontales scroll */
+  .hdr{padding-bottom:6px;margin-bottom:8px;}
+  .hdr h1{font-size:14px;}
+  .hdr p{display:none;}
+  .tabs{margin-bottom:8px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;}
+  .tab{white-space:nowrap;flex-shrink:0;padding:6px 12px;}
+  body{padding:10px 12px;}
+  .kpis{grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px;}
+  .kpi{padding:6px 8px;}
+  .kv{font-size:16px;}
+  .btn{padding:8px;font-size:12px;margin-bottom:6px;}
+  input,select{padding:7px 10px;margin-bottom:7px;}
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -60,6 +88,7 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
   <h1>&#128230; Biblioteca de Materiales</h1>
   <p>POSTEC DE OCCIDENTE S.A.S. - Gestion de Mantenimiento - Gerencia</p>
 </div>
+<div id="app-wrap">
 <div class="tabs">
   <button class="tab on" onclick="T('B')">Biblioteca</button>
   <button class="tab" onclick="T('H')">Historial</button>
@@ -67,7 +96,7 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
   <button class="tab" onclick="T('P')">Precios</button>
   <button class="tab" onclick="T('I')">Informes</button>
 </div>
-
+<div id="content-wrap">
 <div class="panel on" id="pB">
   <div class="kpis">
     <div class="kpi"><div class="kv" id="k1">0</div><div class="kl">Materiales</div></div>
@@ -132,6 +161,7 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
   <button class="btn" onclick="gPDF()">&#128196; Generar y Descargar PDF</button>
 </div>
 
+</div></div><!-- /content-wrap /app-wrap -->
 <div class="toast" id="toast"></div>
 
 <script>
