@@ -88,7 +88,7 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
   <select id="fA2" onchange="filtrarAreaE()"><option value="">Todas las areas</option></select>
   <select id="fE"><option value="">Todos los equipos</option></select>
   <div class="wt"><table class="tbl">
-    <thead><tr><th>Fecha</th><th>N OT</th><th>Equipo</th><th>Mecanico</th><th>Material</th><th>Cant</th><th>UM</th><th>Precio</th></tr></thead>
+    <thead><tr><th>Fecha</th><th>N OT</th><th>Equipo</th><th>Mecanico</th><th>Cod</th><th>Material</th><th>Cant</th><th>UM</th><th>Precio</th></tr></thead>
     <tbody id="tH"><tr><td colspan="8" class="empty">Sin OT registradas</td></tr></tbody>
   </table></div>
 </div>
@@ -251,17 +251,20 @@ function rB(){
     if(eq&&d.equipo!==eq)return;
     if(q&&d.desc.toLowerCase().indexOf(q)===-1)return;
     var k=d.desc.toLowerCase().trim();
-    if(!mp[k])mp[k]={desc:d.desc,um:d.um||'Und',usos:0,eqs:new Set(),p:PR[k]||Number(d.precio)||0};
+    if(!mp[k])mp[k]={desc:d.desc,cod:d.cod||'',um:d.um||'Und',usos:0,eqs:new Set(),p:PR[k]||Number(d.precio)||0};
     mp[k].usos++;
     if(d.equipo)mp[k].eqs.add(d.equipo);
     if(!PR[k]&&Number(d.precio)>0)mp[k].p=Number(d.precio);
+    if(!mp[k].cod&&d.cod)mp[k].cod=d.cod;
   });
   var it=Object.values(mp).sort(function(a,b){return b.usos-a.usos;});
   var L=document.getElementById('lB');
   if(!it.length){L.innerHTML='<div class="empty">Sin resultados</div>';return;}
   L.innerHTML=it.map(function(m){
     var k=encodeURIComponent(m.desc);
-    return '<div class="mat"><div><div class="mn">'+m.desc+'</div>'+
+    return '<div class="mat"><div>'+
+    (m.cod?'<span style="background:#E3F2FD;color:#1565C0;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:700;margin-right:5px">'+m.cod+'</span>':'')+
+    '<span class="mn">'+m.desc+'</span>'+
     '<div class="ms">'+m.usos+' uso'+(m.usos>1?'s':'')+' | '+[...m.eqs].join(', ')+'</div></div>'+
     '<div style="display:flex;align-items:center">'+
     '<div class="mp">'+(m.p>0?fmt(m.p):'--')+'<br><span style="font-size:9px;color:#888;font-weight:400">'+m.um+'</span></div>'+
@@ -292,7 +295,9 @@ function rH(){
   if(!f.length){tb.innerHTML='<tr><td colspan="8" class="empty">Sin OT registradas aun</td></tr>';return;}
   tb.innerHTML=f.slice(0,200).map(function(d){
     return '<tr><td>'+String(d.fecha).slice(0,10)+'</td><td><b>'+d.otNum+'</b></td>'+
-    '<td>'+d.equipo+'</td><td>'+d.mecanico+'</td><td>'+d.desc+'</td>'+
+    '<td>'+d.equipo+'</td><td>'+d.mecanico+'</td>'+
+    '<td style="font-weight:700;color:#1565C0">'+(d.cod||'--')+'</td>'+
+    '<td>'+d.desc+'</td>'+
     '<td style="text-align:center">'+d.cant+'</td><td>'+d.um+'</td>'+
     '<td style="text-align:right;font-weight:700;color:#1a3c5e">'+(Number(d.precio)>0?fmt(d.precio):'--')+'</td></tr>';
   }).join('');
