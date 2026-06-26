@@ -206,8 +206,8 @@ document.getElementById('fE').onchange=rH;
 
 proc();
 
-fetch(GU).then(function(r){return r.json();}).then(function(res){
-  if(res.ok&&res.datos){
+fetch(GU+'?t='+Date.now()).then(function(r){return r.json();}).then(function(res){
+  if(res.ok&&(res.datos||res.materiales)){res.datos=res.datos||res.materiales;
     var real=res.datos.filter(function(d){return d.otNum!='BIBLIOTECA-INICIAL';});
     if(real.length){D=D.filter(function(d){return d.otNum=='BIBLIOTECA-INICIAL';}).concat(real);proc();toast(real.length+' OT reales');}
   }
@@ -215,8 +215,8 @@ fetch(GU).then(function(r){return r.json();}).then(function(res){
 
 function sync(){
   toast('Sincronizando...');
-  fetch(GU).then(function(r){return r.json();}).then(function(res){
-    if(res.ok&&res.datos){
+  fetch(GU+'?t='+Date.now()).then(function(r){return r.json();}).then(function(res){
+    if(res.ok&&(res.datos||res.materiales)){res.datos=res.datos||res.materiales;
       var real=res.datos.filter(function(d){return d.otNum!='BIBLIOTECA-INICIAL';});
       D=D.filter(function(d){return d.otNum=='BIBLIOTECA-INICIAL';}).concat(real);
       proc();toast('Listo: '+D.length+' registros');
