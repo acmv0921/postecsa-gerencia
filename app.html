@@ -236,7 +236,7 @@ function _sheet2D(rows){
   return(rows||[]).filter(function(r){
     return r[1]&&String(r[1]).trim()&&String(r[1]).trim()!=='OT';
   }).map(function(r){
-    var k=(r[4]||'').toLowerCase().trim();
+    var k=(r[4]||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
     return{
       desc:r[4]||'',n:r[4]||'',
       cod:COD_MAP[k]||'',
@@ -384,7 +384,7 @@ function rH(){
   tb.innerHTML=f.slice(0,200).map(function(d){
     return '<tr><td>'+String(d.fecha).slice(0,10)+'</td><td><b>'+d.otNum+'</b></td>'+
     '<td>'+d.equipo+'</td><td>'+d.mecanico+'</td>'+
-    '<td style="font-weight:700;color:#1565C0">'+(d.cod||COD_MAP[d.desc.toLowerCase().trim()]||'--')+'</td>'+
+    '<td style="font-weight:700;color:#1565C0">'+(d.cod||COD_MAP[(d.desc||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim()]||'--')+'</td>'+
     '<td>'+d.desc+'</td>'+
     '<td style="text-align:center">'+d.cant+'</td><td>'+d.um+'</td>'+
     '<td style="text-align:right;font-weight:700;color:#1a3c5e">'+(Number(d.precio)>0?fmt(d.precio):'--')+'</td></tr>';
