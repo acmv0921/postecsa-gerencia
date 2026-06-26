@@ -220,24 +220,48 @@ function _gviz(raw){
   try{
     var s=raw.indexOf('{'),e=raw.lastIndexOf('}')+1;
     var t=JSON.parse(raw.slice(s,e)).table||{};
-    var C=['codigo','nombre','unidad','precio','stock','otNum','equipo','mecanico','fecha','cant'];
-    var cols=(t.cols||[]).map(function(c,i){return(c.label||'').trim()||C[i]||'c'+i;});
+    var cols=(t.cols||[]).map(function(c){return(c.label||'').trim().toLowerCase();});
     return(t.rows||[]).map(function(row){
-      var o={};
+      var o={_cols:cols};
       (row.c||[]).forEach(function(cell,i){
-        o[C[i]]=cell?(cell.v===null||cell.v===undefined?'':String(cell.v)):'';
+        var v=cell?(cell.v===null||cell.v===undefined?'':cell.v):'';
+        // Convertir objetos Date de gviz a string
+        if(typeof v==='number'&&cols[i]&&cols[i].indexOf('fecha')>=0) v=String(v);
+        if(cell&&cell.f) v=cell.f; // usar el valor formateado si existe
+        o[i]=String(v);
+        if(cols[i]) o[cols[i]]=String(v);
       });
       return o;
     });
   }catch(e){return null;}
 }
 function _rows2D(rows){
-  return(rows||[]).map(function(r){
-    return{desc:r.nombre||'',n:r.nombre||'',cod:r.codigo||'',
-           u:r.unidad||'Und',um:r.unidad||'Und',
-           p:parseFloat(r.precio)||0,precio:parseFloat(r.precio)||0,
-           otNum:r.otNum||'BIBLIOTECA-INICIAL',equipo:r.equipo||'General',
-           mecanico:r.mecanico||'',fecha:r.fecha||'',cant:parseFloat(r.cant)||1};
+  if(!rows||!rows.length) return [];
+  var cols=rows[0]._cols||[];
+  // Detectar formato: ¿tiene header 'fecha' como col0?
+  var isFechaFirst=(cols[0]&&cols[0].indexOf('fecha')>=0)||
+                   (rows[0][0]&&String(rows[0][0]).indexOf('Date')>=0)||
+                   (rows[0][0]&&String(rows[0][0]).match(/^\d{4}-\d{2}-\d{2}/));
+  return rows.map(function(r){
+    var fecha,otNum,equipo,mecanico,desc,cant,um,precio,cod;
+    if(isFechaFirst){
+      // Formato viejo: A=fecha B=OT C=equipo D=mecanico E=material F=cant G=um H=precio
+      fecha=r[0]||''; otNum=r[1]||''; equipo=r[2]||''; mecanico=r[3]||'';
+      desc=r[4]||''; cant=parseFloat(r[5])||0; um=r[6]||'Und'; precio=parseFloat(r[7])||0;
+      cod='';
+    } else {
+      // Formato nuevo: A=cod B=desc C=um D=precio E=0 F=otNum G=equipo H=mecanico I=fecha J=cant
+      cod=r[0]||''; desc=r[1]||''; um=r[2]||'Und'; precio=parseFloat(r[3])||0;
+      otNum=r[5]||''; equipo=r[6]||''; mecanico=r[7]||''; fecha=r[8]||'';
+      cant=parseFloat(r[9])||0;
+    }
+    return{cod:cod,desc:desc,n:desc,u:um,um:um,
+           p:precio,precio:precio,
+           otNum:otNum||'BIBLIOTECA-INICIAL',
+           equipo:equipo||'General',
+           mecanico:mecanico||'',
+           fecha:fecha||'',
+           cant:cant};
   });
 }
 
@@ -250,7 +274,7 @@ function sync(){
       if(!rows){toast('Sin datos');return;}
       D=_rows2D(rows);proc();
       var real=D.filter(function(m){return m.otNum&&m.otNum!='BIBLIOTECA-INICIAL';});
-      toast('OK '+real.length+' OTs '+D.length+' mat');
+      toast('OK: '+real.length+' OTs, '+D.length+' reg');
     }).catch(function(e){toast('Err:'+String(e).slice(0,40));});
 }
 
