@@ -209,10 +209,13 @@ proc();
 fetch('https://docs.google.com/spreadsheets/d/1IlxWD6QiCsntzyjEnJfE5KlB36Q39wJsQLnR0HE9gM4/gviz/tq?tqx=out:json&sheet=Hoja%201&t='+Date.now())
   .then(function(r){return r.text();})
   .then(function(txt){
-    var rows=_gviz(txt);if(!rows)return;
-    D=_rows2D(rows);proc();
-    var real=D.filter(function(m){return m.otNum&&m.otNum!='BIBLIOTECA-INICIAL';});
-    if(real.length)toast(real.length+' OTs cargadas');
+    var rows=_gviz(txt);
+    if(!rows)return;
+    var real=_sheet2D(rows);
+    if(real.length){
+      D=D.filter(function(d){return d.otNum=='BIBLIOTECA-INICIAL';}).concat(real);
+      proc();toast(real.length+' OTs cargadas');
+    }
   }).catch(function(){});
 
 
@@ -220,48 +223,32 @@ function _gviz(raw){
   try{
     var s=raw.indexOf('{'),e=raw.lastIndexOf('}')+1;
     var t=JSON.parse(raw.slice(s,e)).table||{};
-    var cols=(t.cols||[]).map(function(c){return(c.label||'').trim().toLowerCase();});
     return(t.rows||[]).map(function(row){
-      var o={_cols:cols};
-      (row.c||[]).forEach(function(cell,i){
-        var v=cell?(cell.v===null||cell.v===undefined?'':cell.v):'';
-        // Convertir objetos Date de gviz a string
-        if(typeof v==='number'&&cols[i]&&cols[i].indexOf('fecha')>=0) v=String(v);
-        if(cell&&cell.f) v=cell.f; // usar el valor formateado si existe
-        o[i]=String(v);
-        if(cols[i]) o[cols[i]]=String(v);
+      return(row.c||[]).map(function(cell){
+        if(!cell||cell.v===null||cell.v===undefined) return '';
+        return cell.f||String(cell.v);
       });
-      return o;
     });
   }catch(e){return null;}
 }
-function _rows2D(rows){
-  if(!rows||!rows.length) return [];
-  var cols=rows[0]._cols||[];
-  // Detectar formato: ¿tiene header 'fecha' como col0?
-  var isFechaFirst=(cols[0]&&cols[0].indexOf('fecha')>=0)||
-                   (rows[0][0]&&String(rows[0][0]).indexOf('Date')>=0)||
-                   (rows[0][0]&&String(rows[0][0]).match(/^\d{4}-\d{2}-\d{2}/));
-  return rows.map(function(r){
-    var fecha,otNum,equipo,mecanico,desc,cant,um,precio,cod;
-    if(isFechaFirst){
-      // Formato viejo: A=fecha B=OT C=equipo D=mecanico E=material F=cant G=um H=precio
-      fecha=r[0]||''; otNum=r[1]||''; equipo=r[2]||''; mecanico=r[3]||'';
-      desc=r[4]||''; cant=parseFloat(r[5])||0; um=r[6]||'Und'; precio=parseFloat(r[7])||0;
-      cod='';
-    } else {
-      // Formato nuevo: A=cod B=desc C=um D=precio E=0 F=otNum G=equipo H=mecanico I=fecha J=cant
-      cod=r[0]||''; desc=r[1]||''; um=r[2]||'Und'; precio=parseFloat(r[3])||0;
-      otNum=r[5]||''; equipo=r[6]||''; mecanico=r[7]||''; fecha=r[8]||'';
-      cant=parseFloat(r[9])||0;
-    }
-    return{cod:cod,desc:desc,n:desc,u:um,um:um,
-           p:precio,precio:precio,
-           otNum:otNum||'BIBLIOTECA-INICIAL',
-           equipo:equipo||'General',
-           mecanico:mecanico||'',
-           fecha:fecha||'',
-           cant:cant};
+function _sheet2D(rows){
+  // Col: 0=Fecha 1=OT 2=Equipo 3=Mecánico 4=Material 5=Cant 6=UM 7=Precio
+  return(rows||[]).filter(function(r){
+    return r[1]&&String(r[1]).trim()&&String(r[1]).trim()!=='OT';
+  }).map(function(r){
+    var k=(r[4]||'').toLowerCase().trim();
+    return{
+      desc:r[4]||'',n:r[4]||'',
+      cod:COD_MAP[k]||'',
+      um:r[6]||'Und',u:r[6]||'Und',
+      precio:parseFloat(String(r[7]).replace(/[^0-9.]/g,''))||0,
+      p:parseFloat(String(r[7]).replace(/[^0-9.]/g,''))||0,
+      otNum:String(r[1]||'').trim(),
+      equipo:r[2]||'',
+      mecanico:r[3]||'',
+      fecha:r[0]||'',
+      cant:parseFloat(r[5])||1
+    };
   });
 }
 
@@ -271,11 +258,11 @@ function sync(){
     .then(function(r){return r.text();})
     .then(function(txt){
       var rows=_gviz(txt);
-      if(!rows){toast('Sin datos');return;}
-      D=_rows2D(rows);proc();
-      var real=D.filter(function(m){return m.otNum&&m.otNum!='BIBLIOTECA-INICIAL';});
-      toast('OK: '+real.length+' OTs, '+D.length+' reg');
-    }).catch(function(e){toast('Err:'+String(e).slice(0,40));});
+      if(!rows){toast('Sin datos del Sheet');return;}
+      var real=_sheet2D(rows);
+      D=D.filter(function(d){return d.otNum=='BIBLIOTECA-INICIAL';}).concat(real);
+      proc();toast('✅ '+real.length+' OTs · '+D.length+' registros');
+    }).catch(function(e){toast('Error:'+String(e).slice(0,50));});
 }
 
 function limpiar(){
