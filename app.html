@@ -209,19 +209,11 @@ proc();
 fetch('https://docs.google.com/spreadsheets/d/1IlxWD6QiCsntzyjEnJfE5KlB36Q39wJsQLnR0HE9gM4/gviz/tq?tqx=out:json&sheet=Hoja%201&t='+Date.now())
   .then(function(r){return r.text();})
   .then(function(txt){
-    var rows=_gviz(txt);
-    if(!rows)return;
-    var mats=rows.map(function(r){
-      return {desc:r.nombre||'',n:r.nombre||'',cod:r.codigo||'',
-              u:r.unidad||'Und',um:r.unidad||'Und',p:parseFloat(r.precio)||0,
-              precio:parseFloat(r.precio)||0,
-              otNum:r.otNum||'BIBLIOTECA-INICIAL',equipo:r.equipo||'General',
-              mecanico:r.mecanico||'',fecha:r.fecha||'',cant:parseFloat(r.cant)||1};
-    });
-    D=mats;proc();
-    var real=mats.filter(function(m){return m.otNum&&m.otNum!='BIBLIOTECA-INICIAL';});
+    var rows=_gviz(txt);if(!rows)return;
+    D=_rows2D(rows);proc();
+    var real=D.filter(function(m){return m.otNum&&m.otNum!='BIBLIOTECA-INICIAL';});
     if(real.length)toast(real.length+' OTs cargadas');
-  }).catch(function(){})
+  }).catch(function(){});
 
 
 function _gviz(raw){
@@ -229,18 +221,24 @@ function _gviz(raw){
     var s=raw.indexOf('{'),e=raw.lastIndexOf('}')+1;
     var t=JSON.parse(raw.slice(s,e)).table||{};
     var C=['codigo','nombre','unidad','precio','stock','otNum','equipo','mecanico','fecha','cant'];
-    var cols=(t.cols||[]).map(function(c,i){return (c.label||'').trim()||C[i]||'c'+i;});
-    var rows=(t.rows||[]).map(function(row){
+    var cols=(t.cols||[]).map(function(c,i){return(c.label||'').trim()||C[i]||'c'+i;});
+    return(t.rows||[]).map(function(row){
       var o={};
       (row.c||[]).forEach(function(cell,i){
-        o[cols[i]]=cell?(cell.v===null||cell.v===undefined?'':String(cell.v)):'';
-        o[C[i]]=o[cols[i]];
+        o[C[i]]=cell?(cell.v===null||cell.v===undefined?'':String(cell.v)):'';
       });
       return o;
     });
-    if(rows.length&&(rows[0].codigo||'').toLowerCase()==='codigo') rows=rows.slice(1);
-    return rows;
   }catch(e){return null;}
+}
+function _rows2D(rows){
+  return(rows||[]).map(function(r){
+    return{desc:r.nombre||'',n:r.nombre||'',cod:r.codigo||'',
+           u:r.unidad||'Und',um:r.unidad||'Und',
+           p:parseFloat(r.precio)||0,precio:parseFloat(r.precio)||0,
+           otNum:r.otNum||'BIBLIOTECA-INICIAL',equipo:r.equipo||'General',
+           mecanico:r.mecanico||'',fecha:r.fecha||'',cant:parseFloat(r.cant)||1};
+  });
 }
 
 function sync(){
@@ -250,17 +248,10 @@ function sync(){
     .then(function(txt){
       var rows=_gviz(txt);
       if(!rows){toast('Sin datos');return;}
-      var mats=rows.map(function(r){
-        return {desc:r.nombre||'',n:r.nombre||'',cod:r.codigo||'',
-                u:r.unidad||'Und',um:r.unidad||'Und',p:parseFloat(r.precio)||0,
-                precio:parseFloat(r.precio)||0,
-                otNum:r.otNum||'BIBLIOTECA-INICIAL',equipo:r.equipo||'General',
-                mecanico:r.mecanico||'',fecha:r.fecha||'',cant:parseFloat(r.cant)||1};
-      });
-      D=mats;proc();
-      var real=mats.filter(function(m){return m.otNum&&m.otNum!='BIBLIOTECA-INICIAL';});
-      toast('✅ '+real.length+' OTs · '+mats.length+' materiales');
-    }).catch(function(e){toast('Error: '+String(e).slice(0,60));})});
+      D=_rows2D(rows);proc();
+      var real=D.filter(function(m){return m.otNum&&m.otNum!='BIBLIOTECA-INICIAL';});
+      toast('OK '+real.length+' OTs '+D.length+' mat');
+    }).catch(function(e){toast('Err:'+String(e).slice(0,40));});
 }
 
 function limpiar(){
