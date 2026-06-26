@@ -206,24 +206,42 @@ document.getElementById('fE').onchange=rH;
 
 proc();
 
-fetch(GU+'?t='+Date.now()).then(function(r){return r.text();}).then(function(txt){
-  var res;try{res=JSON.parse(txt);}catch(e){return;}
-  if(res.ok&&(res.datos||res.materiales)){res.datos=res.datos||res.materiales;
+fetch(GU).then(function(r){return r.json();}).then(function(res){
+  if(res.ok&&res.datos){
     var real=res.datos.filter(function(d){return d.otNum!='BIBLIOTECA-INICIAL';});
     if(real.length){D=D.filter(function(d){return d.otNum=='BIBLIOTECA-INICIAL';}).concat(real);proc();toast(real.length+' OT reales');}
   }
 }).catch(function(){});
 
+
+function _gviz(raw){
+  try{
+    var s=raw.indexOf('{'),e=raw.lastIndexOf('}')+1;
+    var t=JSON.parse(raw.slice(s,e)).table||{};
+    var C=['codigo','nombre','unidad','precio','stock','otNum','equipo','mecanico','fecha','cant'];
+    var cols=(t.cols||[]).map(function(c,i){return (c.label||'').trim()||C[i]||'c'+i;});
+    var rows=(t.rows||[]).map(function(row){
+      var o={};
+      (row.c||[]).forEach(function(cell,i){
+        o[cols[i]]=cell?(cell.v===null||cell.v===undefined?'':String(cell.v)):'';
+        o[C[i]]=o[cols[i]];
+      });
+      return o;
+    });
+    if(rows.length&&(rows[0].codigo||'').toLowerCase()==='codigo') rows=rows.slice(1);
+    return rows;
+  }catch(e){return null;}
+}
+
 function sync(){
   toast('Sincronizando...');
-  fetch(GU+'?t='+Date.now()).then(function(r){return r.text();}).then(function(txt){
-    var res;try{res=JSON.parse(txt);}catch(e){toast('Error JSON');return;}
-    if(res.ok&&(res.datos||res.materiales)){res.datos=res.datos||res.materiales;
+  fetch(GU).then(function(r){return r.json();}).then(function(res){
+    if(res.ok&&res.datos){
       var real=res.datos.filter(function(d){return d.otNum!='BIBLIOTECA-INICIAL';});
       D=D.filter(function(d){return d.otNum=='BIBLIOTECA-INICIAL';}).concat(real);
       proc();toast('Listo: '+D.length+' registros');
     }
-  }).catch(function(e){toast('Error: '+String(e).slice(0,60));});
+  }).catch(function(){toast('Sin conexion');});
 }
 
 function limpiar(){
@@ -245,7 +263,7 @@ function proc(){
   document.getElementById('k2').textContent=new Set(D.filter(function(d){return d.otNum!='BIBLIOTECA-INICIAL';}).map(function(d){return d.otNum;})).size;
   document.getElementById('k3').textContent=new Set(D.map(function(d){return d.equipo;})).size;
   var fechas=D.filter(function(d){return d.otNum!='BIBLIOTECA-INICIAL';}).map(function(d){return String(d.fecha);}).sort();
-  document.getElementById('k4').textContent=fechas.length?(fechas[fechas.length-1]||'').slice(0,10)||'--';
+  document.getElementById('k4').textContent=fechas.length?fechas[fechas.length-1].slice(0,10):'--';
   _poblarAreaSelects();
   rB();rH();rRk();rPr();
 }
