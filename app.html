@@ -109,9 +109,12 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
     <div style="font-size:52px;margin-bottom:12px">🔐</div>
     <h2 style="color:#1a2c4c;margin-bottom:4px;font-size:20px">POSTECSA Gerencia</h2>
     <p style="color:#78909C;font-size:13px;margin-bottom:24px">Ingresa la clave de acceso</p>
+    <div style="position:relative;margin-bottom:16px">
     <input id="ger-clave" type="password" maxlength="20" placeholder="Clave de acceso"
-      style="width:100%;padding:14px;border:2px solid #E0E0E0;border-radius:10px;
-      font-size:20px;text-align:center;letter-spacing:4px;box-sizing:border-box;margin-bottom:16px">
+      style="width:100%;padding:14px 48px 14px 14px;border:2px solid #E0E0E0;border-radius:10px;
+      font-size:20px;text-align:center;letter-spacing:4px;box-sizing:border-box">
+    <button type="button" onclick="_toggleEyeGer()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:22px;padding:4px">👁️</button>
+    </div>
     <button onclick="verificarClaveGer()"
       style="width:100%;padding:14px;background:#e87c1e;color:#fff;border:none;
       border-radius:10px;font-size:16px;font-weight:700;cursor:pointer">Entrar</button>
@@ -207,6 +210,16 @@ var CLAVE_GER_KEY='pst_clave_ger';
 var CLAVE_GER_SES='pst_ger_session';
 function _getClavesGer(){try{return JSON.parse(localStorage.getItem(CLAVE_GER_KEY)||'["GER2025"]');}catch(e){return['GER2025'];}}
 function _setClavesGer(v){localStorage.setItem(CLAVE_GER_KEY,JSON.stringify(v));}
+
+
+function _toggleEyeGer(){
+  var inp=document.getElementById('ger-clave');
+  var btn=inp?inp.parentNode.querySelector('button'):null;
+  if(!inp||!btn) return;
+  if(inp.type==='password'){inp.type='text';inp.style.letterSpacing='normal';btn.textContent='🙈';}
+  else{inp.type='password';inp.style.letterSpacing='4px';btn.textContent='👁️';}
+  inp.focus();
+}
 
 function verificarClaveGer(){
   var inp=document.getElementById('ger-clave');
