@@ -93,10 +93,31 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
   box-shadow:0 -2px 6px rgba(0,0,0,.4);
   isolation:isolate;
 }
+
+.ger-lock{position:fixed;top:0;left:0;width:100%;height:100%;
+  background:linear-gradient(160deg,#1a2c4c,#263238);
+  display:flex;align-items:center;justify-content:center;z-index:9999;padding:24px;box-sizing:border-box;}
+.ger-lock-box{background:#fff;border-radius:16px;padding:32px 24px;
+  width:100%;max-width:340px;text-align:center;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
+
+<div class="ger-lock" id="ger-lock">
+  <div class="ger-lock-box">
+    <div style="font-size:52px;margin-bottom:12px">🔐</div>
+    <h2 style="color:#1a2c4c;margin-bottom:4px;font-size:20px">POSTECSA Gerencia</h2>
+    <p style="color:#78909C;font-size:13px;margin-bottom:24px">Ingresa la clave de acceso</p>
+    <input id="ger-clave" type="password" maxlength="20" placeholder="Clave de acceso"
+      style="width:100%;padding:14px;border:2px solid #E0E0E0;border-radius:10px;
+      font-size:20px;text-align:center;letter-spacing:4px;box-sizing:border-box;margin-bottom:16px">
+    <button onclick="verificarClaveGer()"
+      style="width:100%;padding:14px;background:#e87c1e;color:#fff;border:none;
+      border-radius:10px;font-size:16px;font-weight:700;cursor:pointer">Entrar</button>
+    <p style="color:#B0BEC5;font-size:11px;margin-top:16px">POSTEC DE OCCIDENTE S.A.S.</p>
+  </div>
+</div>
 <div class="hdr">
   <h1>&#128230; Biblioteca de Materiales</h1>
   <p>POSTEC DE OCCIDENTE S.A.S. - Gestion de Mantenimiento - Gerencia</p>
@@ -180,6 +201,56 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
 <div class="toast" id="toast"></div>
 
 <script>
+
+var CLAVE_GER_KEY='pst_clave_ger';
+var CLAVE_GER_SES='pst_ger_session';
+function _getClavesGer(){try{return JSON.parse(localStorage.getItem(CLAVE_GER_KEY)||'["GER2025"]');}catch(e){return['GER2025'];}}
+function _setClavesGer(v){localStorage.setItem(CLAVE_GER_KEY,JSON.stringify(v));}
+
+function verificarClaveGer(){
+  var inp=document.getElementById('ger-clave');
+  if(!inp) return;
+  var clave=inp.value.trim();
+  var claves=_getClavesGer();
+  if(claves.indexOf(clave)>=0){
+    sessionStorage.setItem(CLAVE_GER_SES,'ok');
+    var lock=document.getElementById('ger-lock');
+    if(lock) lock.style.display='none';
+    toast('Bienvenido a Gerencia ??');
+  } else {
+    inp.style.borderColor='#c00';
+    inp.style.background='#FFF3F3';
+    inp.value='';
+    inp.placeholder='Clave incorrecta';
+    setTimeout(function(){inp.style.borderColor='#E0E0E0';inp.style.background='#fff';inp.placeholder='Clave de acceso';},2000);
+  }
+}
+
+function cambiarClaveGer(){
+  var actual=prompt('Clave actual:','');
+  if(!actual) return;
+  if(_getClavesGer().indexOf(actual.trim())<0){toast('Clave incorrecta');return;}
+  var nueva=prompt('Nueva clave (min 4 caracteres):','');
+  if(!nueva||nueva.trim().length<4){toast('Clave muy corta');return;}
+  var conf=prompt('Confirma la nueva clave:','');
+  if(nueva.trim()!==conf.trim()){toast('Las claves no coinciden');return;}
+  _setClavesGer([nueva.trim()]);
+  toast('✅ Clave actualizada');
+}
+
+// Verificar sesión al cargar
+(function(){
+  if(sessionStorage.getItem(CLAVE_GER_SES)==='ok'){
+    var lock=document.getElementById('ger-lock');
+    if(lock) lock.style.display='none';
+  } else {
+    setTimeout(function(){
+      var inp=document.getElementById('ger-clave');
+      if(inp){inp.focus();inp.addEventListener('keydown',function(e){if(e.key==='Enter')verificarClaveGer();});}
+    },200);
+  }
+})();
+
 var GU='https://script.google.com/macros/s/AKfycbwugaCAIMZ7jBVdq2zdpzN4EPsIlMc7c4M0-p8E2Ca146HD4jUvXX_dDuuY-zCn5PWIsA/exec';
 var AREAS_EQUIPOS={
   'QFT VIBRO-COMPACTADOS':['BICAPA','COMPACTADORA','MEZCLADORA','SISTEMA HIDRAULICO','GATOS ESTIBADORES','CHILLER','MOLDES'],
