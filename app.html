@@ -679,22 +679,26 @@ function _gviz(raw){
   }catch(e){return null;}
 }
 function _sheet2D(rows){
-  // Col: 0=Fecha 1=OT 2=Equipo 3=Mecánico 4=Material 5=Cant 6=UM 7=Precio
+  // Hoja 1: A=Fecha B=OT C=Equipo D=Mecanico E=Material F=Cantidad G=UM H=Precio
   return(rows||[]).filter(function(r){
-    return r[1]&&String(r[1]).trim()&&String(r[1]).trim()!=='OT';
+    var ot=String(r[1]||'').trim();
+    var mat=String(r[4]||'').trim();
+    return ot && ot!=='OT' && ot!=='--' &&
+           mat && mat!=='Sin materiales' && mat!=='--' && mat!=='Material';
   }).map(function(r){
-    var k=(r[4]||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+    var mat=String(r[4]||'').trim();
+    var k=mat.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
     return{
-      desc:r[4]||'',n:r[4]||'',
+      desc:mat, n:mat,
       cod:COD_MAP[k]||'',
-      um:r[6]||'Und',u:r[6]||'Und',
-      precio:parseFloat(String(r[7]).replace(/[^0-9.]/g,''))||0,
-      p:parseFloat(String(r[7]).replace(/[^0-9.]/g,''))||0,
+      um:String(r[6]||'Und'), u:String(r[6]||'Und'),
+      precio:parseFloat(String(r[7]||'0').replace(/[^0-9.]/g,''))||0,
+      p:parseFloat(String(r[7]||'0').replace(/[^0-9.]/g,''))||0,
       otNum:String(r[1]||'').trim(),
-      equipo:r[2]||'',
-      mecanico:r[3]||'',
-      fecha:r[0]||'',
-      cant:parseFloat(r[5])||1
+      equipo:String(r[2]||''),
+      mecanico:String(r[3]||''),
+      fecha:String(r[0]||''),
+      cant:parseFloat(String(r[5]||'1'))||1
     };
   });
 }
