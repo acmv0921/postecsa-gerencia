@@ -1,5 +1,5 @@
 // POSTECSA Gerencia — Service Worker
-const CACHE_NAME = 'postecsa-gerencia-v1-1782250324';
+const CACHE_NAME = 'postecsa-gerencia-v2-1782865836';
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME)
