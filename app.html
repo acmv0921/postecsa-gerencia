@@ -162,9 +162,14 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
 </div>
 
 <div class="panel" id="pR">
-  <p style="color:#cdd5e0;margin-bottom:12px;font-size:12px">Materiales mas usados</p>
+  <button onclick="cargarKPIs()" style="width:100%;padding:10px;background:#1565C0;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:14px">Actualizar KPIs desde Sheet</button>
+  <p style="color:#cdd5e0;margin-bottom:8px;font-size:12px;font-weight:700">POR EQUIPO</p>
+  <div id="kpi-equipos" style="margin-bottom:16px"></div>
+  <p style="color:#cdd5e0;margin-bottom:8px;font-size:12px;font-weight:700">POR MECANICO / PROVEEDOR</p>
+  <div id="kpi-mecanicos" style="margin-bottom:16px"></div>
+  <p style="color:#cdd5e0;margin-bottom:8px;font-size:12px;font-weight:700">MATERIALES MAS USADOS</p>
   <div id="rM"></div>
-  <p style="color:#cdd5e0;margin:12px 0;font-size:12px">Equipos con mas intervenciones</p>
+  <p style="color:#cdd5e0;margin:12px 0 8px;font-size:12px;font-weight:700">EQUIPOS CON MAS INTERVENCIONES</p>
   <div id="rE"></div>
 </div>
 
@@ -701,6 +706,38 @@ function _sheet2D(rows){
       cant:parseFloat(String(r[5]||'1'))||1
     };
   });
+}
+
+
+function cargarKPIs(){
+  toast('Cargando KPIs...');
+  fetch('https://script.google.com/macros/s/AKfycbw_xoH7HoqvHK4x9RdWJpuTnXXVupxL_dsP08yMw-NBJD3WcZt8Zb1Es13QW4_SSnk0/exec?accion=get_kpis&t='+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(!res.ok){toast('Error KPIs');return;}
+      var kpis=res.kpis||[];
+      var equipos=kpis.filter(function(k){return k.tipo==='EQUIPO';});
+      var mecanicos=kpis.filter(function(k){return k.tipo==='MECANICO';});
+
+      function fila(k){
+        return '<div style="background:#1e2a3a;border-radius:8px;padding:10px 12px;margin-bottom:8px">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center">'
+          +'<b style="color:#fff;font-size:13px">'+k.nombre+'</b>'
+          +'<span style="color:#FF6D00;font-weight:700">'+k.total_oms+' OMs</span>'
+          +'</div>'
+          +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">'
+          +'<div style="text-align:center"><div style="color:#81D4FA;font-size:12px;font-weight:700">'+k.tiempo_prom+' min</div><div style="color:#78909C;font-size:10px">T.Prom</div></div>'
+          +'<div style="text-align:center"><div style="color:#A5D6A7;font-size:12px;font-weight:700">$'+Number(k.costo_prom).toLocaleString('es-CO')+'</div><div style="color:#78909C;font-size:10px">Costo Prom</div></div>'
+          +'<div style="text-align:center"><div style="color:#FFF176;font-size:12px;font-weight:700">$'+Number(k.costo_total).toLocaleString('es-CO')+'</div><div style="color:#78909C;font-size:10px">Total</div></div>'
+          +'</div></div>';
+      }
+
+      document.getElementById('kpi-equipos').innerHTML=
+        equipos.length?equipos.map(fila).join(''):'<p style="color:#546E7A;font-size:12px">Sin datos aun</p>';
+      document.getElementById('kpi-mecanicos').innerHTML=
+        mecanicos.length?mecanicos.map(fila).join(''):'<p style="color:#546E7A;font-size:12px">Sin datos aun</p>';
+      toast('KPIs actualizados: '+kpis.length+' registros');
+    }).catch(function(e){toast('Error: '+String(e).slice(0,50));});
 }
 
 function sync(){
