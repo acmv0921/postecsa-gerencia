@@ -227,9 +227,10 @@ function bD(kE){var d=decodeURIComponent(kE);if(!confirm('Eliminar "'+d+'"?'))re
 function rH(){
   var q=(document.getElementById('bH').value||'').toLowerCase(),eq=document.getElementById('fE').value;
   var f=D.filter(function(d){if(d.otNum=='BIBLIOTECA-INICIAL')return false;if(eq&&d.equipo!==eq)return false;if(q&&[d.otNum,d.equipo,d.mecanico,d.desc].join(' ').toLowerCase().indexOf(q)===-1)return false;return true;});
+  f.sort(function(a,b){return new Date(b.fecha)-new Date(a.fecha);});
   var tb=document.getElementById('tH');
   if(!f.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:16px;color:#888">Sin OT registradas aun</td></tr>';return;}
-  tb.innerHTML=f.slice(0,200).map(function(d){return '<tr><td>'+String(d.fecha).slice(0,10)+'</td><td><b>'+d.otNum+'</b></td><td>'+d.equipo+'</td><td>'+d.mecanico+'</td><td>'+d.desc+'</td><td style="text-align:center">'+d.cant+'</td><td>'+d.um+'</td><td style="text-align:right;font-weight:700;color:#1a3c5e">'+(Number(d.precio)>0?fmt(d.precio):'--')+'</td></tr>';}).join('');
+  tb.innerHTML=f.map(function(d){return '<tr><td>'+String(d.fecha).slice(0,10)+'</td><td><b>'+d.otNum+'</b></td><td>'+d.equipo+'</td><td>'+d.mecanico+'</td><td>'+d.desc+'</td><td style="text-align:center">'+d.cant+'</td><td>'+d.um+'</td><td style="text-align:right;font-weight:700;color:#1a3c5e">'+(Number(d.precio)>0?fmt(d.precio):'--')+'</td></tr>';}).join('');
 }
 
 function rRk(){
