@@ -673,7 +673,7 @@ function _datosToD(datos){
       um:String(r.um||'Und'), u:String(r.um||'Und'),
       precio:Number(r.precio)||0,
       p:Number(r.precio)||0,
-      otNum:ot,
+      otNum:String(r.otNum||'').trim(),
       equipo:String(r.equipo||''),
       mecanico:String(r.mecanico||''),
       fecha:String(r.fecha||''),
