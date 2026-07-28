@@ -270,7 +270,7 @@ function cambiarClaveGer(){
   }
 })();
 
-var GU='https://script.google.com/macros/s/AKfycbyeyL7frkM9sA1zWDVWO-8qHT8ngSTsIQdNsGxsncZlkmYI6KfWaE40e_S_pfD_4iMh/exec';
+var GU='https://script.google.com/macros/s/AKfycbw_xoH7HoqvHK4x9RdWJpuTnXXVupxL_dsP08yMw-NBJD3WcZt8Zb1Es13QW4_SSnk0/exec';
 var AREAS_EQUIPOS={
   'QFT VIBRO-COMPACTADOS':['BICAPA','COMPACTADORA','MEZCLADORA','SISTEMA HIDRAULICO','GATOS ESTIBADORES','CHILLER','MOLDES'],
   'MAQUINA AMARILLA':['MEZCLADORA','COMPACTADORA','CARROS DE TRANSP PROD TERMINADO','MOLDES','CORTADORA','SPLITEADORA'],
@@ -658,12 +658,35 @@ document.getElementById('fE').onchange=rH;
 
 proc();
 
-fetch('https://docs.google.com/spreadsheets/d/1IlxWD6QiCsntzyjEnJfE5KlB36Q39wJsQLnR0HE9gM4/gviz/tq?tqx=out:json&sheet=Hoja%201&t='+Date.now())
-  .then(function(r){return r.text();})
-  .then(function(txt){
-    var rows=_gviz(txt);
-    if(!rows)return;
-    var real=_sheet2D(rows);
+function _datosToD(datos){
+  return(datos||[]).filter(function(r){
+    var ot=String(r.otNum||'').trim();
+    var mat=String(r.desc||'').trim();
+    return ot && ot!=='OT' && ot!=='--' &&
+           mat && mat!=='Sin materiales' && mat!=='--' && mat!=='Material';
+  }).map(function(r){
+    var mat=String(r.desc||'').trim();
+    var k=mat.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+    return{
+      desc:mat, n:mat,
+      cod:COD_MAP[k]||'',
+      um:String(r.um||'Und'), u:String(r.um||'Und'),
+      precio:Number(r.precio)||0,
+      p:Number(r.precio)||0,
+      otNum:ot,
+      equipo:String(r.equipo||''),
+      mecanico:String(r.mecanico||''),
+      fecha:String(r.fecha||''),
+      cant:Number(r.cant)||1
+    };
+  });
+}
+
+fetch('https://script.google.com/macros/s/AKfycbw_xoH7HoqvHK4x9RdWJpuTnXXVupxL_dsP08yMw-NBJD3WcZt8Zb1Es13QW4_SSnk0/exec?accion=get_datos&t='+Date.now())
+  .then(function(r){return r.json();})
+  .then(function(res){
+    if(!res||!res.ok||!res.datos)return;
+    var real=_datosToD(res.datos);
     if(real.length){
       D=D.filter(function(d){return d.otNum=='BIBLIOTECA-INICIAL';}).concat(real);
       proc();toast(real.length+' OTs cargadas');
@@ -742,12 +765,11 @@ function cargarKPIs(){
 
 function sync(){
   toast('Sincronizando...');
-  fetch('https://docs.google.com/spreadsheets/d/1IlxWD6QiCsntzyjEnJfE5KlB36Q39wJsQLnR0HE9gM4/gviz/tq?tqx=out:json&sheet=Hoja%201&t='+Date.now())
-    .then(function(r){return r.text();})
-    .then(function(txt){
-      var rows=_gviz(txt);
-      if(!rows){toast('Sin datos del Sheet');return;}
-      var real=_sheet2D(rows);
+  fetch('https://script.google.com/macros/s/AKfycbw_xoH7HoqvHK4x9RdWJpuTnXXVupxL_dsP08yMw-NBJD3WcZt8Zb1Es13QW4_SSnk0/exec?accion=get_datos&t='+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(!res||!res.ok||!res.datos){toast('Sin datos del Sheet');return;}
+      var real=_datosToD(res.datos);
       D=D.filter(function(d){return d.otNum=='BIBLIOTECA-INICIAL';}).concat(real);
       proc();toast('✅ '+real.length+' OTs · '+D.length+' registros');
     }).catch(function(e){toast('Error:'+String(e).slice(0,50));});
