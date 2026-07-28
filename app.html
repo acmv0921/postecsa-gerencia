@@ -206,7 +206,7 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
 </div>
 
 </div></div><!-- /content-wrap /app-wrap -->
-<div id="credito-acm">Diseño &amp; Desarrollo: ABDIEL CICAR MORENO &nbsp;···&nbsp; POSTECSA Gerencia v6.3</div>
+<div id="credito-acm">Diseño &amp; Desarrollo: ABDIEL CICAR MORENO &nbsp;···&nbsp; POSTECSA Gerencia v6.4</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -659,7 +659,7 @@ document.getElementById('fE').onchange=rH;
 proc();
 
 function _datosToD(datos){
-  return(datos||[]).filter(function(r){
+  var mapeados=(datos||[]).filter(function(r){
     var ot=String(r.otNum||'').trim();
     var mat=String(r.desc||'').trim();
     return ot && ot!=='OT' && ot!=='--' &&
@@ -679,6 +679,15 @@ function _datosToD(datos){
       fecha:String(r.fecha||''),
       cant:Number(r.cant)||1
     };
+  });
+  // Deduplicar filas identicas (mismo OT+material+cantidad+fecha) —
+  // pueden llegar repetidas desde el origen por reenvios duplicados
+  var vistos={};
+  return mapeados.filter(function(d){
+    var k=d.otNum+'|'+d.desc+'|'+d.cant+'|'+d.um+'|'+d.fecha;
+    if(vistos[k])return false;
+    vistos[k]=true;
+    return true;
   });
 }
 
@@ -998,7 +1007,7 @@ function gPDF(){
     doc.text('POSTEC DE OCCIDENTE S.A.S.  \u00b7  Gesti\u00f3n de Mantenimiento y Confiabilidad',MG,284);
     doc.text('P\u00e1g. '+pg,W-MG,284,{align:'right'});
     doc.setFontSize(6.5);doc.setTextColor(180,180,180);
-    doc.text('Dise\u00f1o & Desarrollo: ABDIEL CICAR MORENO  \u00b7  POSTECSA Gerencia v6.3',W/2,289,{align:'center'});
+    doc.text('Dise\u00f1o & Desarrollo: ABDIEL CICAR MORENO  \u00b7  POSTECSA Gerencia v6.4',W/2,289,{align:'center'});
   }
   function ST(t,y){doc.setFillColor(232,124,30);doc.rect(MG,y,W-MG*2,6,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(255,255,255);doc.text(t,MG+2,y+4.5);return y+9;}
   function TH(cols,y){doc.setFillColor(26,60,94);doc.rect(MG,y,W-MG*2,6,'F');doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(255,255,255);cols.forEach(function(c){doc.text(c[0],MG+c[1],y+4.5,c[2]?{align:c[2]}:{});});return y+7;}
