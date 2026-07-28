@@ -793,7 +793,7 @@ function proc(){
   document.getElementById('k1').textContent=new Set(D.map(function(d){return d.desc;})).size;
   document.getElementById('k2').textContent=new Set(D.filter(function(d){return d.otNum!='BIBLIOTECA-INICIAL';}).map(function(d){return d.otNum;})).size;
   document.getElementById('k3').textContent=new Set(D.map(function(d){return d.equipo;})).size;
-  var fechas=D.filter(function(d){return d.otNum!='BIBLIOTECA-INICIAL';}).map(function(d){return String(d.fecha);}).sort();
+  var fechas=D.filter(function(d){return d.otNum!='BIBLIOTECA-INICIAL';}).map(function(d){return String(d.fecha);}).sort(function(a,b){return new Date(a)-new Date(b);});
   document.getElementById('k4').textContent=fechas.length?fechas[fechas.length-1].slice(0,10):'--';
   _poblarAreaSelects();
   rB();rH();rRk();rPr();
@@ -889,9 +889,10 @@ function rH(){
     if(q){var txt=[d.otNum,d.equipo,d.mecanico,d.desc].join(' ').toLowerCase();if(txt.indexOf(q)===-1)return false;}
     return true;
   });
+  f.sort(function(a,b){return new Date(b.fecha)-new Date(a.fecha);});
   var tb=document.getElementById('tH');
   if(!f.length){tb.innerHTML='<tr><td colspan="8" class="empty">Sin OT registradas aun</td></tr>';return;}
-  tb.innerHTML=f.slice(0,200).map(function(d){
+  tb.innerHTML=f.map(function(d){
     return '<tr><td>'+String(d.fecha).slice(0,10)+'</td><td><b>'+d.otNum+'</b></td>'+
     '<td>'+d.equipo+'</td><td>'+d.mecanico+'</td>'+
     '<td style="font-weight:700;color:#1565C0">'+(d.cod||COD_MAP[(d.desc||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim()]||'--')+'</td>'+
