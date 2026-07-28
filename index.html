@@ -131,7 +131,7 @@ body{font-family:Arial,sans-serif;background:#0f2540;min-height:100vh;padding-bo
 </div>
 <div class="toast" id="toast"></div>
 <script>
-var GU='https://script.google.com/macros/s/AKfycbyeyL7frkM9sA1zWDVWO-8qHT8ngSTsIQdNsGxsncZlkmYI6KfWaE40e_S_pfD_4iMh/exec';
+var GU='https://script.google.com/macros/s/AKfycbw_xoH7HoqvHK4x9RdWJpuTnXXVupxL_dsP08yMw-NBJD3WcZt8Zb1Es13QW4_SSnk0/exec';
 var D=[{desc:"Rodamiento 6205 generico",um:"Und",precio:12500,otNum:"BIBLIOTECA-INICIAL",equipo:"General",fecha:"2026-06-17",cant:1,mecanico:"Biblioteca de Referencia"},
 {desc:"Rodamiento 6205 SKF",um:"Und",precio:45000,otNum:"BIBLIOTECA-INICIAL",equipo:"General",fecha:"2026-06-17",cant:1,mecanico:"Biblioteca de Referencia"},
 {desc:"Rodamiento 6305",um:"Und",precio:18000,otNum:"BIBLIOTECA-INICIAL",equipo:"General",fecha:"2026-06-17",cant:1,mecanico:"Biblioteca de Referencia"},
@@ -190,7 +190,7 @@ var PR={};var IS=1;
 window.addEventListener('DOMContentLoaded',function(){
   try{PR=JSON.parse(localStorage.getItem('pg_p')||'{}');}catch(e){}
   proc();
-  fetch(GU).then(function(r){return r.json();}).then(function(res){
+  fetch(GU+'?accion=get_datos&_t='+Date.now()).then(function(r){return r.json();}).then(function(res){
     if(res.ok&&res.datos&&res.datos.length>0){
       var real=res.datos.filter(function(d){return d.otNum!='BIBLIOTECA-INICIAL';});
       if(real.length>0){var b=D.filter(function(d){return d.otNum=='BIBLIOTECA-INICIAL';});D=b.concat(real);proc();toast(real.length+' OT reales cargadas');}
@@ -198,7 +198,7 @@ window.addEventListener('DOMContentLoaded',function(){
   }).catch(function(){});
 });
 
-function sync(){toast('Sincronizando...');fetch(GU).then(function(r){return r.json();}).then(function(res){if(res.ok&&res.datos){var real=res.datos.filter(function(d){return d.otNum!='BIBLIOTECA-INICIAL';});var b=D.filter(function(d){return d.otNum=='BIBLIOTECA-INICIAL';});D=b.concat(real);proc();toast('Sincronizado: '+D.length+' registros');}}).catch(function(){toast('Sin conexion');});}
+function sync(){toast('Sincronizando...');fetch(GU+'?accion=get_datos&_t='+Date.now()).then(function(r){return r.json();}).then(function(res){if(res.ok&&res.datos){var real=res.datos.filter(function(d){return d.otNum!='BIBLIOTECA-INICIAL';});var b=D.filter(function(d){return d.otNum=='BIBLIOTECA-INICIAL';});D=b.concat(real);proc();toast('Sincronizado: '+D.length+' registros');}}).catch(function(){toast('Sin conexion');});}
 
 function limpiar(){if(!confirm('Limpiar todo el historial de OT reales?'))return;D=D.filter(function(d){return d.otNum=='BIBLIOTECA-INICIAL';});fetch(GU,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({accion:'limpiar_todo'})}).catch(function(){});proc();toast('Historial limpiado');}
 
@@ -219,7 +219,7 @@ function rB(){
   var it=Object.values(mp).sort(function(a,b){return b.usos-a.usos;});
   var L=document.getElementById('lB');
   if(!it.length){L.innerHTML='<div class="empty">Sin resultados</div>';return;}
-  L.innerHTML=it.map(function(m){var k=encodeURIComponent(m.desc);return '<div class="mi"><div class="mif"><div class="mn">'+m.desc+'</div><div class="ms">'+m.usos+' uso'+(m.usos>1?'s':'')+' - '+[...m.eqs].join(', ')+'</div></div><div class="mp">'+(m.p>0?fmt(m.p):'<span>Sin precio</span>')+'<span>/'+m.um+'</span></div><button class="xb" onclick="bD(''+k+'')">X</button></div>';}).join('');
+  L.innerHTML=it.map(function(m){var k=encodeURIComponent(m.desc);return '<div class="mi"><div class="mif"><div class="mn">'+m.desc+'</div><div class="ms">'+m.usos+' uso'+(m.usos>1?'s':'')+' - '+[...m.eqs].join(', ')+'</div></div><div class="mp">'+(m.p>0?fmt(m.p):'<span>Sin precio</span>')+'<span>/'+m.um+'</span></div><button class="xb" onclick="bD(\''+k+'\')">X</button></div>';}).join('');
 }
 
 function bD(kE){var d=decodeURIComponent(kE);if(!confirm('Eliminar "'+d+'"?'))return;D=D.filter(function(x){return x.desc.toLowerCase().trim()!==d.toLowerCase().trim();});fetch(GU,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({accion:'borrar_material',desc:d})}).catch(function(){});proc();toast('Eliminado');}
@@ -242,7 +242,7 @@ function rRk(){
 
 function rPr(){
   var mp={};D.forEach(function(d){if(!d.desc)return;var k=d.desc.trim().toLowerCase();if(!mp[k])mp[k]={desc:d.desc,um:d.um||'Und',p:PR[k]||Number(d.precio)||0};});
-  document.getElementById('pL').innerHTML=Object.entries(mp).sort(function(a,b){return a[0].localeCompare(b[0]);}).map(function(e){var k=encodeURIComponent(e[0]);return '<div class="pr"><div class="pn">'+e[1].desc+'</div><div class="pu">'+e[1].um+'</div><input class="pi" type="number" id="p_'+k+'" value="'+(e[1].p||'')+'" placeholder="0" min="0" step="100"><button class="pb" onclick="gP(''+k+'')">Guardar</button></div>';}).join('');
+  document.getElementById('pL').innerHTML=Object.entries(mp).sort(function(a,b){return a[0].localeCompare(b[0]);}).map(function(e){var k=encodeURIComponent(e[0]);return '<div class="pr"><div class="pn">'+e[1].desc+'</div><div class="pu">'+e[1].um+'</div><input class="pi" type="number" id="p_'+k+'" value="'+(e[1].p||'')+'" placeholder="0" min="0" step="100"><button class="pb" onclick="gP(\''+k+'\')">Guardar</button></div>';}).join('');
 }
 
 function gP(kE){var k=decodeURIComponent(kE);var v=parseFloat(document.getElementById('p_'+kE).value)||0;PR[k]=v;try{localStorage.setItem('pg_p',JSON.stringify(PR));}catch(e){}toast('Precio guardado');rB();}
