@@ -206,7 +206,7 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
 </div>
 
 </div></div><!-- /content-wrap /app-wrap -->
-<div id="credito-acm">Diseño &amp; Desarrollo: ABDIEL CICAR MORENO &nbsp;···&nbsp; POSTECSA Gerencia v6.2</div>
+<div id="credito-acm">Diseño &amp; Desarrollo: ABDIEL CICAR MORENO &nbsp;···&nbsp; POSTECSA Gerencia v6.3</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -997,7 +997,7 @@ function gPDF(){
     doc.text('POSTEC DE OCCIDENTE S.A.S.  \u00b7  Gesti\u00f3n de Mantenimiento y Confiabilidad',MG,284);
     doc.text('P\u00e1g. '+pg,W-MG,284,{align:'right'});
     doc.setFontSize(6.5);doc.setTextColor(180,180,180);
-    doc.text('Dise\u00f1o & Desarrollo: ABDIEL CICAR MORENO  \u00b7  POSTECSA Gerencia v6.2',W/2,289,{align:'center'});
+    doc.text('Dise\u00f1o & Desarrollo: ABDIEL CICAR MORENO  \u00b7  POSTECSA Gerencia v6.3',W/2,289,{align:'center'});
   }
   function ST(t,y){doc.setFillColor(232,124,30);doc.rect(MG,y,W-MG*2,6,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(255,255,255);doc.text(t,MG+2,y+4.5);return y+9;}
   function TH(cols,y){doc.setFillColor(26,60,94);doc.rect(MG,y,W-MG*2,6,'F');doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(255,255,255);cols.forEach(function(c){doc.text(c[0],MG+c[1],y+4.5,c[2]?{align:c[2]}:{});});return y+7;}
@@ -1036,11 +1036,17 @@ function gPDF(){
   toast('PDF generado');
 }
 
-// Registrar Service Worker
+// Eliminar cualquier Service Worker viejo y su caché — evita quedar atascado
+// sirviendo una version vieja para siempre sin que el usuario pueda notarlo
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js')
-    .then(()=>console.log('[SW Gerencia] Registrado'))
-    .catch(e=>console.warn('[SW Gerencia]',e));
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    regs.forEach(function(r){ r.unregister(); });
+  }).catch(function(){});
+}
+if('caches' in window){
+  caches.keys().then(function(keys){
+    keys.forEach(function(k){ caches.delete(k); });
+  }).catch(function(){});
 }
 
 var tt;
