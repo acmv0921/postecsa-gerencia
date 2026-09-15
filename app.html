@@ -133,6 +133,7 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
   <button class="tab" onclick="T('R')">Ranking</button>
   <button class="tab" onclick="T('P')">Precios</button>
   <button class="tab" onclick="T('I')">Informes</button>
+  <button class="tab" onclick="T('Q')">Requisiciones</button>
 </div>
 <div id="content-wrap">
 <div class="panel on" id="pB">
@@ -205,8 +206,16 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
   <button class="btn" onclick="gPDF()">&#128196; Generar y Descargar PDF</button>
 </div>
 
+<div class="panel" id="pQ">
+  <div class="kpis">
+    <div class="kpi"><div class="kv" id="rq1">0</div><div class="kl">Pendientes de aprobar</div></div>
+    <div class="kpi"><div class="kv o" id="rq2">$0</div><div class="kl">Valor total pendiente</div></div>
+  </div>
+  <div id="reqList">Cargando...</div>
+</div>
+
 </div></div><!-- /content-wrap /app-wrap -->
-<div id="credito-acm">Diseño &amp; Desarrollo: ABDIEL CICAR MORENO &nbsp;···&nbsp; POSTECSA Gerencia v6.4</div>
+<div id="credito-acm">Diseño &amp; Desarrollo: ABDIEL CICAR MORENO &nbsp;···&nbsp; POSTECSA Gerencia v6.5</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -962,11 +971,12 @@ function gP(kE){
 }
 
 function T(t){
-  var map={B:'pB',H:'pH',R:'pR',P:'pP',I:'pI'};
+  var map={B:'pB',H:'pH',R:'pR',P:'pP',I:'pI',Q:'pQ'};
   document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on');});
   document.querySelectorAll('.panel').forEach(function(x){x.classList.remove('on');});
   event.target.classList.add('on');
   document.getElementById(map[t]).classList.add('on');
+  if(t==='Q') cargarRequisicionesGerencia();
 }
 
 var IS=1;
@@ -1007,7 +1017,7 @@ function gPDF(){
     doc.text('POSTEC DE OCCIDENTE S.A.S.  \u00b7  Gesti\u00f3n de Mantenimiento y Confiabilidad',MG,284);
     doc.text('P\u00e1g. '+pg,W-MG,284,{align:'right'});
     doc.setFontSize(6.5);doc.setTextColor(180,180,180);
-    doc.text('Dise\u00f1o & Desarrollo: ABDIEL CICAR MORENO  \u00b7  POSTECSA Gerencia v6.4',W/2,289,{align:'center'});
+    doc.text('Dise\u00f1o & Desarrollo: ABDIEL CICAR MORENO  \u00b7  POSTECSA Gerencia v6.5',W/2,289,{align:'center'});
   }
   function ST(t,y){doc.setFillColor(232,124,30);doc.rect(MG,y,W-MG*2,6,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(255,255,255);doc.text(t,MG+2,y+4.5);return y+9;}
   function TH(cols,y){doc.setFillColor(26,60,94);doc.rect(MG,y,W-MG*2,6,'F');doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(255,255,255);cols.forEach(function(c){doc.text(c[0],MG+c[1],y+4.5,c[2]?{align:c[2]}:{});});return y+7;}
@@ -1057,6 +1067,113 @@ if('caches' in window){
   caches.keys().then(function(keys){
     keys.forEach(function(k){ caches.delete(k); });
   }).catch(function(){});
+}
+
+
+function cargarRequisicionesGerencia(){
+  var box=document.getElementById('reqList');
+  box.innerHTML='Cargando...';
+  var esLocal=(location.protocol==='file:');
+  fetch(GU+'?accion=gerencia_listar_requisiciones&_t='+Date.now())
+    .then(function(r){
+      if(!r.ok) throw new Error('El servidor respondio con estado '+r.status);
+      return r.json();
+    })
+    .then(function(res){
+      var data=(res&&res.data)||[];
+      document.getElementById('rq1').textContent=data.length;
+      var totalGral=data.reduce(function(s,r){return s+(Number(r.valor_total)||0);},0);
+      document.getElementById('rq2').textContent=fmt(totalGral);
+      if(!data.length){box.innerHTML='<div class="empty">No hay requisiciones pendientes de aprobar</div>';return;}
+      box.innerHTML=data.map(function(r){
+        var tipoColor=r.tipo==='Mantenimiento'?'#1a3c5e':'#5a6478';
+        return '<div style="background:#fff;border-radius:8px;padding:12px 14px;margin-bottom:10px;border-left:4px solid '+tipoColor+'">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+          +'<b style="color:#1a3c5e;font-size:13px">Req. #'+r.num+' &middot; '+(r.area||'')+'</b>'
+          +'<span style="font-size:9px;background:'+tipoColor+';color:#fff;padding:2px 8px;border-radius:10px">'+(r.tipo||'')+'</span></div>'
+          +'<div style="font-size:11px;color:#888;margin-bottom:6px">'+(r.justificacion||'')+(r.om?' &middot; OM #'+r.om:'')+'</div>'
+          +(r.om?'<div id="omCtx'+r.num+'" style="margin-bottom:8px"></div>':'')
+          +'<div id="resumenItems'+r.num+'" style="font-size:11px;color:#37474F;margin-bottom:8px;font-style:italic">Cargando materiales...</div>'
+          +'<div style="font-weight:800;color:#e87c1e;font-size:16px;margin-bottom:8px">'+fmt(r.valor_total)+'</div>'
+          +'<div id="detReq'+r.num+'" style="margin-bottom:8px"></div>'
+          +'<div style="display:flex;gap:8px">'
+          +'<button class="btn" style="margin:0;background:#888;flex:1" onclick="verDetalleReqGerencia(\''+r.num+'\')">Ver comparativo</button>'
+          +'<button class="btn" style="margin:0;flex:1" onclick="aprobarRequisicionGerencia(\''+r.num+'\')">&#10003; Aprobar</button>'
+          +'</div></div>';
+      }).join('');
+      data.forEach(function(r){ cargarResumenItems(r.num); if(r.om) cargarContextoOM(r.om, r.num); });
+    })
+    .catch(function(err){
+      var msg=(err&&err.message)||'Error desconocido';
+      var pista=esLocal
+        ? '<div style="font-size:10.5px;color:#8a6d3b;background:#fff8e6;border-radius:6px;padding:8px;margin-top:8px">Este archivo se esta abriendo directo desde tu computador (file://). Sube este archivo a GitHub Pages (mismo repo postecsa-gerencia, junto a manifest.json y sw.js) y abrelo desde esa direccion web.</div>'
+        : '';
+      box.innerHTML='<div class="empty" style="color:#c0392b">Error al cargar requisiciones:<br><span style="font-size:11px;color:#aaa">'+msg+'</span>'+pista+'</div>'
+        +'<button class="btn" style="margin-top:10px" onclick="cargarRequisicionesGerencia()">Reintentar</button>';
+    });
+}
+
+function cargarContextoOM(omNum, reqNum){
+  var box=document.getElementById('omCtx'+reqNum);
+  if(!box)return;
+  fetch(GU+'?accion=sicot_obtener_om&num='+encodeURIComponent(omNum)+'&_t='+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(res){
+      var om=res&&res.om;
+      if(!om){box.innerHTML='';return;}
+      var pr=String(om.prioridad||'').toUpperCase();
+      var prColor=pr==='ALTA'?'#c0392b':(pr==='MEDIA'?'#e87c1e':(pr==='BAJA'?'#2e7d32':'#888'));
+      var prLabel=pr||'SIN DEFINIR';
+      box.innerHTML='<div style="background:#F5F7F8;border-radius:6px;padding:8px 10px;border-left:3px solid '+prColor+'">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">'
+        +'<span style="font-size:10px;font-weight:800;color:#37474F;text-transform:uppercase">Contexto de la OM #'+omNum+'</span>'
+        +'<span style="font-size:9px;font-weight:800;color:#fff;background:'+prColor+';padding:2px 8px;border-radius:10px">Prioridad '+prLabel+'</span>'
+        +'</div>'
+        +'<div style="font-size:11px;color:#37474F"><b>'+(om.equipo||'')+'</b>'+(om.falla?' &mdash; '+om.falla:'')+'</div>'
+        +'<div style="font-size:10px;color:#888;margin-top:2px">Estado de la OM: '+(om.estado||'--')+(om.fecha?' &middot; Creada: '+String(om.fecha).slice(0,10):'')+'</div>'
+        +'</div>';
+    })
+    .catch(function(){box.innerHTML='';});
+}
+
+function cargarResumenItems(num){
+  var box=document.getElementById('resumenItems'+num);
+  if(!box)return;
+  fetch(GU+'?accion=compras_obtener_requisicion&num='+encodeURIComponent(num)+'&_t='+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(res){
+      var items=(res&&res.items)||[];
+      if(!items.length){box.textContent='Sin materiales registrados';return;}
+      var nombres=items.map(function(it){return it.descripcion||'material sin descripcion';});
+      var visibles=nombres.slice(0,2).join(', ');
+      var extra=nombres.length>2?' +'+(nombres.length-2)+' mas':'';
+      box.textContent=nombres.length+' material'+(nombres.length>1?'es':'')+': '+visibles+extra;
+    })
+    .catch(function(){box.textContent='No se pudo cargar el detalle de materiales';});
+}
+
+function verDetalleReqGerencia(num){
+  var box=document.getElementById('detReq'+num);
+  if(!box)return;
+  box.innerHTML='<div style="font-size:11px;color:#888">Cargando comparativo...</div>';
+  fetch(GU+'?accion=compras_obtener_requisicion&num='+encodeURIComponent(num)+'&_t='+Date.now()).then(function(r){return r.json();}).then(function(res){
+    var items=(res&&res.items)||[];
+    if(!items.length){box.innerHTML='<div style="font-size:11px;color:#888">Sin items registrados</div>';return;}
+    box.innerHTML='<div class="wt"><table class="tbl"><thead><tr><th>Material</th><th>Cot. 1</th><th>Cot. 2</th><th>Mejor oferta</th></tr></thead><tbody>'
+      +items.map(function(it){
+        return '<tr><td>'+(it.cantidad||'')+' '+(it.unidad||'')+' - '+(it.descripcion||'')+'</td>'
+          +'<td>'+(it.cot1_proveedor?it.cot1_proveedor+'<br>'+fmt(it.cot1_precio):'--')+'</td>'
+          +'<td>'+(it.cot2_proveedor?it.cot2_proveedor+'<br>'+fmt(it.cot2_precio):'--')+'</td>'
+          +'<td style="font-weight:700;color:#1a3c5e">'+(it.mejor_proveedor?it.mejor_proveedor+'<br>'+fmt(it.mejor_precio):'--')+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+  }).catch(function(){box.innerHTML='<div style="font-size:11px;color:#c0392b">Error al cargar el detalle</div>';});
+}
+
+function aprobarRequisicionGerencia(num){
+  if(!confirm('Aprobar la requisicion #'+num+'? Esto la marca como cerrada y aprobada.'))return;
+  fetch(GU+'?accion=gerencia_aprobar_requisicion_get&num='+encodeURIComponent(num)+'&_t='+Date.now());
+  toast('Requisicion #'+num+' aprobada');
+  setTimeout(cargarRequisicionesGerencia,700);
 }
 
 var tt;
