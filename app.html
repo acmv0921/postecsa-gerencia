@@ -215,7 +215,7 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
 </div>
 
 </div></div><!-- /content-wrap /app-wrap -->
-<div id="credito-acm">Diseño &amp; Desarrollo: ABDIEL CICAR MORENO &nbsp;···&nbsp; POSTECSA Gerencia v6.5</div>
+<div id="credito-acm">Diseño &amp; Desarrollo: ABDIEL CICAR MORENO &nbsp;···&nbsp; POSTECSA Gerencia v6.6</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1017,7 +1017,7 @@ function gPDF(){
     doc.text('POSTEC DE OCCIDENTE S.A.S.  \u00b7  Gesti\u00f3n de Mantenimiento y Confiabilidad',MG,284);
     doc.text('P\u00e1g. '+pg,W-MG,284,{align:'right'});
     doc.setFontSize(6.5);doc.setTextColor(180,180,180);
-    doc.text('Dise\u00f1o & Desarrollo: ABDIEL CICAR MORENO  \u00b7  POSTECSA Gerencia v6.5',W/2,289,{align:'center'});
+    doc.text('Dise\u00f1o & Desarrollo: ABDIEL CICAR MORENO  \u00b7  POSTECSA Gerencia v6.6',W/2,289,{align:'center'});
   }
   function ST(t,y){doc.setFillColor(232,124,30);doc.rect(MG,y,W-MG*2,6,'F');doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(255,255,255);doc.text(t,MG+2,y+4.5);return y+9;}
   function TH(cols,y){doc.setFillColor(26,60,94);doc.rect(MG,y,W-MG*2,6,'F');doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(255,255,255);cols.forEach(function(c){doc.text(c[0],MG+c[1],y+4.5,c[2]?{align:c[2]}:{});});return y+7;}
@@ -1070,11 +1070,24 @@ if('caches' in window){
 }
 
 
+
+function alertaBadgeGerencia(nivel, dias){
+  var cfg = {
+    ok:      {color:'#78909C', bg:'#ECEFF1', label: dias+' d\u00eda'+(dias===1?'':'s')},
+    amarillo:{color:'#F9A825', bg:'#FFF8E1', label:'\ud83d\udfe1 '+dias+' d\u00edas'},
+    naranja: {color:'#E65100', bg:'#FFF3E0', label:'\ud83d\udfe0 '+dias+' d\u00edas'},
+    rojo:    {color:'#C62828', bg:'#FFEBEE', label:'\ud83d\udd34 '+dias+' d\u00edas \u00b7 urgente'},
+    vencida: {color:'#B71C1C', bg:'#FFCDD2', label:'\u274c Vencida'}
+  };
+  var c = cfg[nivel] || cfg.ok;
+  return '<span style="font-size:9px;font-weight:800;background:'+c.bg+';color:'+c.color+';padding:3px 9px;border-radius:10px;white-space:nowrap">'+c.label+'</span>';
+}
+
 function cargarRequisicionesGerencia(){
   var box=document.getElementById('reqList');
   box.innerHTML='Cargando...';
   var esLocal=(location.protocol==='file:');
-  fetch(GU+'?accion=gerencia_listar_requisiciones&_t='+Date.now())
+  fetch(GU+'?accion=gerencia_listar_requisiciones_alertas&_t='+Date.now())
     .then(function(r){
       if(!r.ok) throw new Error('El servidor respondio con estado '+r.status);
       return r.json();
@@ -1088,9 +1101,9 @@ function cargarRequisicionesGerencia(){
       box.innerHTML=data.map(function(r){
         var tipoColor=r.tipo==='Mantenimiento'?'#1a3c5e':'#5a6478';
         return '<div style="background:#fff;border-radius:8px;padding:12px 14px;margin-bottom:10px;border-left:4px solid '+tipoColor+'">'
-          +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:6px">'
           +'<b style="color:#1a3c5e;font-size:13px">Req. #'+r.num+' &middot; '+(r.area||'')+'</b>'
-          +'<span style="font-size:9px;background:'+tipoColor+';color:#fff;padding:2px 8px;border-radius:10px">'+(r.tipo||'')+'</span></div>'
+          +'<div style="display:flex;gap:6px;align-items:center">'+alertaBadgeGerencia(r.nivel_alerta,r.dias_transcurridos)+'<span style="font-size:9px;background:'+tipoColor+';color:#fff;padding:2px 8px;border-radius:10px">'+(r.tipo||'')+'</span></div></div>'
           +'<div style="font-size:11px;color:#888;margin-bottom:6px">'+(r.justificacion||'')+(r.om?' &middot; OM #'+r.om:'')+'</div>'
           +(r.om?'<div id="omCtx'+r.num+'" style="margin-bottom:8px"></div>':'')
           +'<div id="resumenItems'+r.num+'" style="font-size:11px;color:#37474F;margin-bottom:8px;font-style:italic">Cargando materiales...</div>'
