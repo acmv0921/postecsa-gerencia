@@ -215,7 +215,7 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
 </div>
 
 </div></div><!-- /content-wrap /app-wrap -->
-<div id="credito-acm">Diseño &amp; Desarrollo: ABDIEL CICAR MORENO &nbsp;···&nbsp; POSTECSA Gerencia v6.6</div>
+<div id="credito-acm">Diseño &amp; Desarrollo: ABDIEL CICAR MORENO &nbsp;···&nbsp; POSTECSA Gerencia v6.7</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1071,6 +1071,21 @@ if('caches' in window){
 
 
 
+function _sicotParseFecha(v){
+  if(!v) return null;
+  var m = String(v).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m) return new Date(Number(m[3]), Number(m[2])-1, Number(m[1]));
+  var d = new Date(v);
+  return isNaN(d.getTime()) ? null : d;
+}
+function alertaInfo(fechaStr){
+  var f = _sicotParseFecha(fechaStr);
+  if(!f) return {dias:0, nivel:'ok'};
+  var hoy = new Date();
+  var dias = Math.max(0, Math.round((hoy.setHours(0,0,0,0) - new Date(f).setHours(0,0,0,0)) / 86400000));
+  var nivel = dias>=30 ? 'rojo' : (dias>=15 ? 'naranja' : (dias>=7 ? 'amarillo' : 'ok'));
+  return {dias:dias, nivel:nivel};
+}
 function alertaBadgeGerencia(nivel, dias){
   var cfg = {
     ok:      {color:'#78909C', bg:'#ECEFF1', label: dias+' d\u00eda'+(dias===1?'':'s')},
@@ -1087,7 +1102,7 @@ function cargarRequisicionesGerencia(){
   var box=document.getElementById('reqList');
   box.innerHTML='Cargando...';
   var esLocal=(location.protocol==='file:');
-  fetch(GU+'?accion=gerencia_listar_requisiciones_alertas&_t='+Date.now())
+  fetch(GU+'?accion=gerencia_listar_requisiciones&_t='+Date.now())
     .then(function(r){
       if(!r.ok) throw new Error('El servidor respondio con estado '+r.status);
       return r.json();
@@ -1103,7 +1118,7 @@ function cargarRequisicionesGerencia(){
         return '<div style="background:#fff;border-radius:8px;padding:12px 14px;margin-bottom:10px;border-left:4px solid '+tipoColor+'">'
           +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:6px">'
           +'<b style="color:#1a3c5e;font-size:13px">Req. #'+r.num+' &middot; '+(r.area||'')+'</b>'
-          +'<div style="display:flex;gap:6px;align-items:center">'+alertaBadgeGerencia(r.nivel_alerta,r.dias_transcurridos)+'<span style="font-size:9px;background:'+tipoColor+';color:#fff;padding:2px 8px;border-radius:10px">'+(r.tipo||'')+'</span></div></div>'
+          +'<div style="display:flex;gap:6px;align-items:center">'+(function(){var a=alertaInfo(r.fecha);return alertaBadgeGerencia(a.nivel,a.dias);})()+'<span style="font-size:9px;background:'+tipoColor+';color:#fff;padding:2px 8px;border-radius:10px">'+(r.tipo||'')+'</span></div></div>'
           +'<div style="font-size:11px;color:#888;margin-bottom:6px">'+(r.justificacion||'')+(r.om?' &middot; OM #'+r.om:'')+'</div>'
           +(r.om?'<div id="omCtx'+r.num+'" style="margin-bottom:8px"></div>':'')
           +'<div id="resumenItems'+r.num+'" style="font-size:11px;color:#37474F;margin-bottom:8px;font-style:italic">Cargando materiales...</div>'
@@ -1195,6 +1210,35 @@ function toast(m){
   t.textContent=m;t.classList.add('on');
   clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on');},3000);
 }
+
+// ============================================================
+// AVISO DE NOVEDADES (como en SIVIL)
+// ============================================================
+var VERSION_ACTUAL_GER = 'v6.7';
+var NOVEDADES_GER = [
+  'Corregido: la pestana de Requisiciones volvia a mostrar "0 pendientes" por error \u2014 ya funciona de nuevo',
+  'Alertas de dias transcurridos por requisicion: 7+ dias amarillo, 15+ naranja, 30+ rojo'
+];
+function mostrarNovedadesGerSiAplica(){
+  try{
+    var vista = localStorage.getItem('pst_ger_version_vista');
+    if(vista === VERSION_ACTUAL_GER) return;
+    var html = '<div id="modal-novedades-ger" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px">'
+      +'<div style="background:#fff;border-radius:16px;padding:24px;max-width:360px;width:100%;box-shadow:0 8px 30px rgba(0,0,0,.3)">'
+      +'<div style="font-size:36px;margin-bottom:8px">\ud83c\udf89</div>'
+      +'<h2 style="font-size:18px;margin-bottom:2px;color:#263238">Novedades '+VERSION_ACTUAL_GER+'</h2>'
+      +'<p style="font-size:12px;color:#90A4AE;margin-bottom:14px">Si ves esta pantalla, la actualizacion si se cargo</p>'
+      +'<ul style="margin:0 0 16px;padding-left:18px;font-size:13px;color:#546E7A;line-height:1.7">'
+      +NOVEDADES_GER.map(function(i){return '<li>'+i+'</li>';}).join('')
+      +'</ul>'
+      +'<button onclick="localStorage.setItem(\'pst_ger_version_vista\',\''+VERSION_ACTUAL_GER+'\');document.getElementById(\'modal-novedades-ger\').remove();" style="width:100%;padding:13px;background:#0D47A1;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer">Entendido</button>'
+      +'</div></div>';
+    var wrap=document.createElement('div');
+    wrap.innerHTML=html;
+    document.body.appendChild(wrap.firstChild);
+  }catch(e){}
+}
+setTimeout(mostrarNovedadesGerSiAplica, 600);
 </script>
 
 </body>
