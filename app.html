@@ -101,6 +101,7 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
   width:100%;max-width:340px;text-align:center;}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -153,6 +154,7 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
 </div>
 
 <div class="panel" id="pH">
+  <button class="btn" onclick="abrirExcelHist()" style="background:#e87c1e">&#128229; Descargar Excel</button>
   <input id="bH" placeholder="Buscar OT, equipo, material...">
   <select id="fA2" onchange="filtrarAreaE()"><option value="">Todas las areas</option></select>
   <select id="fE"><option value="">Todos los equipos</option></select>
@@ -215,7 +217,23 @@ input,select{width:100%;padding:9px 11px;border:none;border-radius:8px;font-size
 </div>
 
 </div></div><!-- /content-wrap /app-wrap -->
-<div id="credito-acm">Diseño &amp; Desarrollo: ABDIEL CICAR MORENO &nbsp;···&nbsp; POSTECSA Gerencia v6.7</div>
+<div id="credito-acm">Diseño &amp; Desarrollo: ABDIEL CICAR MORENO &nbsp;···&nbsp; POSTECSA Gerencia v6.8</div>
+
+<div id="modalXH" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99998;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;padding:22px;max-width:380px;width:100%;box-shadow:0 8px 30px rgba(0,0,0,.3);font-family:Arial,sans-serif">
+    <h2 style="font-size:17px;color:#0f2540;margin-bottom:4px">&#128229; Descargar historial en Excel</h2>
+    <p style="font-size:12px;color:#78909C;margin-bottom:14px">Se genera un archivo .xlsx con el detalle por material y un resumen por OT.</p>
+    <label style="font-size:12px;font-weight:700;color:#37474F">Desde</label>
+    <input type="date" id="xhDesde" style="width:100%;padding:9px;margin:4px 0 10px;border:1px solid #CFD8DC;border-radius:8px;font-size:14px">
+    <label style="font-size:12px;font-weight:700;color:#37474F">Hasta</label>
+    <input type="date" id="xhHasta" style="width:100%;padding:9px;margin:4px 0 12px;border:1px solid #CFD8DC;border-radius:8px;font-size:14px">
+    <label style="display:block;font-size:13px;color:#37474F;margin-bottom:6px"><input type="radio" name="xhAlc" value="todo" checked onchange="xhCuenta()"> Todo el historial</label>
+    <label style="display:block;font-size:13px;color:#37474F;margin-bottom:10px"><input type="radio" name="xhAlc" value="filtro" onchange="xhCuenta()"> Solo lo filtrado en pantalla (busqueda y equipo)</label>
+    <p id="xhInfo" style="font-size:12px;color:#0D47A1;font-weight:700;margin-bottom:14px"></p>
+    <button onclick="descargarExcelHist()" style="width:100%;padding:12px;background:#e87c1e;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">Descargar Excel</button>
+    <button onclick="cerrarExcelHist()" style="width:100%;padding:11px;background:#ECEFF1;color:#37474F;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Cancelar</button>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1199,6 +1217,75 @@ function aprobarRequisicionGerencia(num){
   setTimeout(cargarRequisicionesGerencia,700);
 }
 
+
+/* ===== Descarga del historial en Excel (v6.8) ===== */
+function _histFilas(soloFiltro,desde,hasta){
+  var q=(document.getElementById('bH').value||'').toLowerCase();
+  var eq=document.getElementById('fE').value;
+  var f=D.filter(function(d){
+    if(d.otNum=='BIBLIOTECA-INICIAL')return false;
+    if(!d.desc||d.desc==='Sin materiales'||d.desc==='--')return false;
+    if(!d.otNum||d.otNum==='\u2014'||d.otNum==='--')return false;
+    if(soloFiltro){
+      if(eq&&d.equipo!==eq)return false;
+      if(q){var txt=[d.otNum,d.equipo,d.mecanico,d.desc].join(' ').toLowerCase();if(txt.indexOf(q)===-1)return false;}
+    }
+    var fe=String(d.fecha).slice(0,10);
+    if(desde&&fe<desde)return false;
+    if(hasta&&fe>hasta)return false;
+    return true;
+  });
+  f.sort(function(a,b){return new Date(b.fecha)-new Date(a.fecha);});
+  return f;
+}
+function _xhParams(){
+  var r=document.querySelector('input[name="xhAlc"]:checked');
+  return{filtro:!!(r&&r.value==='filtro'),desde:document.getElementById('xhDesde').value,hasta:document.getElementById('xhHasta').value};
+}
+function xhCuenta(){
+  var p=_xhParams(),f=_histFilas(p.filtro,p.desde,p.hasta);
+  var ots={};f.forEach(function(d){ots[d.otNum]=1;});
+  document.getElementById('xhInfo').textContent=f.length+' registros en '+Object.keys(ots).length+' OT';
+}
+function abrirExcelHist(){
+  document.getElementById('modalXH').style.display='flex';
+  xhCuenta();
+  ['xhDesde','xhHasta'].forEach(function(id){document.getElementById(id).onchange=xhCuenta;});
+}
+function cerrarExcelHist(){document.getElementById('modalXH').style.display='none';}
+function descargarExcelHist(){
+  var p=_xhParams(),f=_histFilas(p.filtro,p.desde,p.hasta);
+  if(!f.length){toast('No hay registros para ese filtro');return;}
+  var cab=['Fecha','N OT','Equipo','Mecanico','Cod','Material','Cant','UM','Precio unitario','Total'];
+  var aoa=[cab],porOT={},orden=[];
+  f.forEach(function(d){
+    var cod=d.cod||COD_MAP[(d.desc||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim()]||'';
+    var pr=Number(d.precio)||0,ct=Number(d.cant)||0,tot=pr*ct;
+    aoa.push([String(d.fecha).slice(0,10),d.otNum,d.equipo,d.mecanico,cod,d.desc,ct,d.um,pr,tot]);
+    if(!porOT[d.otNum]){porOT[d.otNum]={fecha:String(d.fecha).slice(0,10),equipo:d.equipo,mec:d.mecanico,n:0,tot:0};orden.push(d.otNum);}
+    porOT[d.otNum].n++;porOT[d.otNum].tot+=tot;
+  });
+  var res=[['N OT','Fecha','Equipo','Mecanico','Items','Total materiales']];
+  orden.forEach(function(k){var o=porOT[k];res.push([k,o.fecha,o.equipo,o.mec,o.n,o.tot]);});
+  var hoy=new Date().toISOString().slice(0,10),nombre='HISTORIAL_OM_POSTECSA_'+hoy;
+  try{
+    if(typeof XLSX==='undefined')throw new Error('sin XLSX');
+    var wb=XLSX.utils.book_new();
+    var w1=XLSX.utils.aoa_to_sheet(aoa);
+    w1['!cols']=[{wch:11},{wch:8},{wch:20},{wch:30},{wch:12},{wch:44},{wch:7},{wch:7},{wch:14},{wch:14}];
+    var w2=XLSX.utils.aoa_to_sheet(res);
+    w2['!cols']=[{wch:8},{wch:11},{wch:20},{wch:30},{wch:7},{wch:16}];
+    XLSX.utils.book_append_sheet(wb,w1,'Historial');
+    XLSX.utils.book_append_sheet(wb,w2,'Resumen por OT');
+    XLSX.writeFile(wb,nombre+'.xlsx');
+  }catch(e){
+    var csv='\ufeff'+aoa.map(function(r){return r.map(function(c){return '"'+String(c==null?'':c).replace(/"/g,'""')+'"';}).join(';');}).join('\r\n');
+    var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=nombre+'.csv';
+    document.body.appendChild(a);a.click();a.remove();
+  }
+  cerrarExcelHist();toast('Descarga generada ('+f.length+' registros)');
+}
+
 var tt;
 function toast(m){
   var t=document.getElementById('toast');
@@ -1209,8 +1296,9 @@ function toast(m){
 // ============================================================
 // AVISO DE NOVEDADES (como en SIVIL)
 // ============================================================
-var VERSION_ACTUAL_GER = 'v6.7';
+var VERSION_ACTUAL_GER = 'v6.8';
 var NOVEDADES_GER = [
+  'Nuevo: en Historial, boton "Descargar Excel" con ventana para elegir fechas y si bajas todo o solo lo filtrado',
   'Corregido: la pestana de Requisiciones volvia a mostrar "0 pendientes" por error \u2014 ya funciona de nuevo',
   'Alertas de dias transcurridos por requisicion: 7+ dias amarillo, 15+ naranja, 30+ rojo'
 ];
