@@ -1056,17 +1056,12 @@ function gPDF(){
   toast('PDF generado');
 }
 
-// Eliminar cualquier Service Worker viejo y su caché — evita quedar atascado
-// sirviendo una version vieja para siempre sin que el usuario pueda notarlo
+// Service Worker: se REGISTRA (antes se des-registraba y Chrome no ofrecia instalar la app).
+// sw.js es "red primero": siempre baja la version nueva; el cache solo sirve sin conexion.
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.getRegistrations().then(function(regs){
-    regs.forEach(function(r){ r.unregister(); });
-  }).catch(function(){});
-}
-if('caches' in window){
-  caches.keys().then(function(keys){
-    keys.forEach(function(k){ caches.delete(k); });
-  }).catch(function(){});
+  navigator.serviceWorker.register('sw.js',{updateViaCache:'none'})
+    .then(function(r){ try{ r.update(); }catch(e){} })
+    .catch(function(e){ console.warn('SW no registrado:',e); });
 }
 
 
@@ -1241,5 +1236,21 @@ function mostrarNovedadesGerSiAplica(){
 setTimeout(mostrarNovedadesGerSiAplica, 600);
 </script>
 
+<script>
+/* Instalar como app (Chrome/Edge): boton propio ademas del icono de la barra de direcciones */
+(function(){
+  var _dip=null;
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault(); _dip=e;
+    if(document.getElementById('btn-instalar')) return;
+    var b=document.createElement('button');
+    b.id='btn-instalar'; b.textContent='\ud83d\udcf2 Instalar app';
+    b.style.cssText='position:fixed;right:12px;bottom:12px;z-index:9999;padding:10px 14px;background:#e87c1e;color:#fff;border:none;border-radius:20px;font-weight:700;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer';
+    b.onclick=function(){ if(!_dip) return; _dip.prompt(); _dip.userChoice.then(function(){ _dip=null; var x=document.getElementById('btn-instalar'); if(x) x.remove(); }); };
+    document.body.appendChild(b);
+  });
+  window.addEventListener('appinstalled',function(){ var x=document.getElementById('btn-instalar'); if(x) x.remove(); });
+})();
+</script>
 </body>
 </html>
